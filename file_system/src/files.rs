@@ -1,6 +1,6 @@
 use std::io;
 use std::io::BufRead;
-use crate::{FAT, FileSystem};
+use crate::{FatType, FileSystem};
 use crate::traits::File;
 use std::path::Path;
 use log::debug;
@@ -65,7 +65,7 @@ impl File for FileSystem {
         };
 
         // find the first free block
-        let mut blk_num = self.get_free_block()? as u64;
+        let mut blk_num = self.get_free_block()?;
 
         self.write_data(&file_data, blk_num)?;
 
@@ -80,6 +80,9 @@ impl File for FileSystem {
         {
             debug!("Entry: {:?}", entry);
         }
+
+        // update size of the parent block
+        self.curr_block.parent_entry.size += entry.size;
 
         self.curr_block.entries.push(entry);
 
@@ -122,18 +125,21 @@ impl File for FileSystem {
             return Err(FileError::FileNotFound.into());
         }
 
-        // make sure its of type file
+        // make sure it's of type file
         if file_entry.file_type != FileType::File {
             return Err(FileError::FileIsDirectory.into());
         }
 
         // recursivly check the fat until we reach EOF and read all blocks in order
         let data = self.read_file_data(file_entry.blk_num)?;
+        let data = String::from_utf8(data.data)?;
 
         #[cfg(feature = "debug")]
         {
-            debug!("Data: {}", String::from_utf8_lossy(&data.data));
+            debug!("Data: {}", data);
         }
+
+        println!("{}", data);
 
         Ok(())
     }

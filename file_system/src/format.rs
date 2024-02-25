@@ -1,4 +1,4 @@
-use crate::{FAT, FAT_BLK, FileSystem, ROOT_BLK};
+use crate::{FatType, FAT_BLK, FileSystem, ROOT_BLK, FAT};
 use crate::traits::Format;
 use anyhow::Result;
 use rustic_disk::Disk;
@@ -12,7 +12,7 @@ impl Format for FileSystem {
             Disk::delete_disk()?;
         }
 
-        let mut fat: Vec<FAT> = vec![FAT::Free; Disk::BLOCK_SIZE / std::mem::size_of::<Block>()];
+        let mut fat = FAT::new();
 
         let blk = Block {
             parent_entry: DirEntry {
@@ -21,14 +21,14 @@ impl Format for FileSystem {
                 ..Default::default()
             },
             blk_num: 0,
-            entries: vec![DirEntry::default(); 64],
+            entries: vec![DirEntry::default(); Self::NUM_ENTRIES],
         };
 
         self.disk = Disk::new()?;
         self.disk.write_block(ROOT_BLK as usize, &blk)?;
         self.curr_block = blk;
-        fat[ROOT_BLK as usize] = FAT::EOF;
-        fat[FAT_BLK as usize] = FAT::EOF;
+        fat[ROOT_BLK as usize] = FatType::EOF;
+        fat[FAT_BLK as usize] = FatType::EOF;
         self.disk.write_block(FAT_BLK as usize, &fat)?;
         self.fat = fat;
 

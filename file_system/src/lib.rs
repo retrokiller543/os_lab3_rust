@@ -7,9 +7,12 @@ mod files;
 pub mod prelude;
 mod directories;
 
+use serde_big_array::BigArray;
+use std::ops::{Index, IndexMut};
 use rustic_disk::Disk;
 use rustic_disk::traits::BlockStorage;
 use anyhow::Result;
+use log::{debug, trace};
 use serde::Serialize;
 use serde_derive::Deserialize;
 use crate::dir_entry::{Block, DirEntry, FileType};
@@ -22,22 +25,96 @@ const FAT_BLK: u64 = 1;
 pub struct FileSystem {
     disk: Disk,
     curr_block: Block,
-    fat: Vec<FAT> // this is the amount of blocks in the disk
+    fat: FAT
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub enum FAT {
+#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+pub enum FatType {
     Free,
-    Taken(u64),
+    Taken(u16),
     EOF,
 }
 
-impl FileSystem {
-    pub fn new() -> Result<Self> {
-        let disk = Disk::new()?;
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct FAT(
+    //#[serde(with = "BigArray")]
+    Vec<FatType>
+);
 
-        let (curr_block, fat) = if !Disk::disk_exists() {
-            let fat = vec![FAT::Free; Disk::BLOCK_SIZE / std::mem::size_of::<Block>()];
+impl FAT {
+    pub fn new() -> Self {
+        let mut fat = vec![FatType::Free; (Disk::BLOCK_SIZE >> 2) - 8]; // 8 bytes is from padding in FAT struct
+        fat.fill(FatType::Free);
+        FAT(fat)
+    }
+
+    // Create an iterator
+    pub fn iter(&self) -> FatIterator {
+        FatIterator {
+            fat: self,
+            position: 0,
+        }
+    }
+
+    pub fn get(&self, index: usize) -> Option<&FatType> {
+        self.0.get(index)
+    }
+}
+
+impl Index<usize> for FAT {
+    type Output = FatType;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.0[index]
+    }
+}
+
+impl IndexMut<usize> for FAT {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.0[index]
+    }
+}
+
+// Define the iterator struct
+pub struct FatIterator<'a> {
+    fat: &'a FAT,
+    position: usize,
+}
+
+// Implement the Iterator trait for FatIterator
+impl<'a> Iterator for FatIterator<'a> {
+    type Item = &'a FatType;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.position >= Disk::NUM_BLOCKS {
+            None
+        } else {
+            let result = &self.fat.0[self.position];
+            self.position += 1;
+            Some(result)
+        }
+    }
+}
+
+impl FileSystem {
+    pub const NUM_ENTRIES: usize = Disk::BLOCK_SIZE / DirEntry::MAX_SIZE - 1;
+    pub fn new() -> Result<Self> {
+        #[cfg(feature = "debug")]
+        {
+            trace!("Creating new file system...");
+            // print size of DirEntry
+            debug!("Size of DirEntry: {}", DirEntry::MAX_SIZE);
+            // print size of Block
+            debug!("Size of Block: {} + {}", std::mem::size_of::<Block>(), std::mem::size_of::<DirEntry>() * Self::NUM_ENTRIES);
+            // print size of FAT
+            debug!("Size of FAT: {}", std::mem::size_of::<FAT>());
+            // print size of FATType
+            debug!("Size of FATType: {}", std::mem::size_of::<FatType>());
+        }
+
+        let (curr_block, fat, disk) = if !Disk::disk_exists() {
+            let disk = Disk::new()?;
+            let fat = FAT::new();
             let root_block = Block {
                 parent_entry: DirEntry {
                     name: "/".to_string(),
@@ -45,17 +122,23 @@ impl FileSystem {
                     ..Default::default()
                 },
                 blk_num: 0,
-                entries: vec![DirEntry::default(); 64],
+                entries: vec![DirEntry::default(); Self::NUM_ENTRIES], // -1 to account for the parent entry
             };
             disk.write_block(0, &root_block)?;
             disk.write_block(1, &fat)?;
-            (root_block, fat)
+            (root_block, fat, disk)
         } else {
+            let disk = Disk::new()?;
             let root_block: Block = disk.read_block(0)?;
-            let fat: Vec<FAT> = disk.read_block(1)?;
-            (root_block, fat)
+            let fat: FAT = disk.read_block(1)?;
+            (root_block, fat, disk)
         };
 
+        #[cfg(feature = "debug")]
+        {
+            trace!("Root block: {:?}", curr_block);
+            trace!("FAT: {:?}", fat);
+        }
 
         Ok(FileSystem { disk, curr_block, fat })
     }
@@ -66,13 +149,13 @@ impl FileSystem {
         Ok(())
     }
 
-    pub fn get_free_block(&self) -> Result<usize> {
+    pub fn get_free_block(&self) -> Result<u16> {
         let mut blk = 0;
 
         for (index, block) in self.fat.iter().enumerate() {
             match block {
-                FAT::Free => {
-                    blk = index as u64;
+                FatType::Free => {
+                    blk = index as u16;
                     break;
                 },
                 _ => continue,
@@ -83,10 +166,10 @@ impl FileSystem {
             return Err(FSError::NoFreeBlocks.into());
         }
 
-        Ok(blk as usize)
+        Ok(blk)
     }
 
-    pub fn write_data<T: Serialize>(&mut self, data: &T, start_blk: u64) -> Result<()> {
+    pub fn write_data<T: Serialize>(&mut self, data: &T, start_blk: u16) -> Result<()> {
         // Serialize the data
         let serialized_data = bincode::serialize(data).map_err(FSError::SerializationError)?;
 
@@ -105,13 +188,13 @@ impl FileSystem {
 
         while let Some(chunk) = chunks.next() {
             if !first_iteration {
-                blk = self.get_free_block()? as u64; // Get a new block if not the first iteration
+                blk = self.get_free_block()?; // Get a new block if not the first iteration
             } else {
                 first_iteration = false;
             }
             self.disk.write_serilized_data(blk as usize, chunk)?;
             let next_blk = if chunks.peek().is_some() {
-                Some(self.get_free_block()? as u64)
+                Some(self.get_free_block()?)
             } else {
                 None
             };
@@ -123,13 +206,13 @@ impl FileSystem {
         Ok(())
     }
 
-    pub fn update_fat(&mut self, blk: u64, next_blk: Option<u64>) -> Result<()> {
+    pub fn update_fat(&mut self, blk: u16, next_blk: Option<u16>) -> Result<()> {
         match next_blk {
             Some(next_blk) => {
-                self.fat[blk as usize] = FAT::Taken(next_blk);
+                self.fat[blk as usize] = FatType::Taken(next_blk);
             },
             None => {
-                self.fat[blk as usize] = FAT::EOF;
+                self.fat[blk as usize] = FatType::EOF;
             },
         }
         self.disk.write_block(FAT_BLK as usize, &self.fat)?;
@@ -137,20 +220,20 @@ impl FileSystem {
     }
 
     // Method to read all blocks of a file in order following the FAT table
-    pub fn read_file_data(&self, start_blk: u64) -> Result<FileData> {
+    pub fn read_file_data(&self, start_blk: u16) -> Result<FileData> {
         let mut data = FileData::default();
         let mut blk_num = start_blk;
 
         // Recursive closure to read blocks following the FAT
-        let mut read_blocks_recursively = |blk_num: &mut u64, data: &mut Vec<u8>| -> Result<()> {
+        let mut read_blocks_recursively = |blk_num: &mut u16, data: &mut Vec<u8>| -> Result<()> {
             loop {
                 match self.fat.get(*blk_num as usize) {
-                    Some(FAT::Taken(next_blk)) => {
+                    Some(&FatType::Taken(next_blk)) => {
                         let block: FileData = self.disk.read_block(*blk_num as usize)?;
                         data.extend_from_slice(&block.data);
-                        *blk_num = *next_blk;
+                        *blk_num = next_blk;
                     },
-                    Some(FAT::EOF) => {
+                    Some(&FatType::EOF) => {
                         let block: FileData = self.disk.read_block(*blk_num as usize)?;
                         data.extend_from_slice(&block.data);
                         break;

@@ -13,3 +13,7 @@ serde_derive = "1.0.196"
 thiserror = "1.0.56"
 log = "0.4.20"
 env_logger = "0.11.1"
+
+[features]
+default = []
+debug = []

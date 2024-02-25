@@ -1,6 +1,6 @@
 use anyhow::Result;
 use file_system::prelude::*;
-use log::{info, warn, error};
+use log::{info, warn, error, debug, trace};
 use std::{io::{self, Write}, env};
 use env_logger::Env;
 
@@ -9,34 +9,22 @@ enum ShellError {
     #[error("Invalid command usage")]
     InvalidUsage,
     #[error("File system error: {0}")]
-    FileSystemError(#[from] anyhow::Error), // Assume FileSystem errors are anyhow::Error for simplicity
+    FileSystemError(#[from] anyhow::Error),
 }
 
 pub struct Shell {
     file_system: FileSystem,
 }
 
-macro_rules! run_command {
-    ($cmd:expr, $args:expr, $req_args:expr) => {
-        if $args.len() != $req_args {
-            return Err(ShellError::InvalidUsage.into());
-        } else {
-            self.file_system.$cmd($args).map_err(Into::into)
-        }
-    }
-}
-
 impl Shell {
     pub fn new() -> Result<Shell> {
-        info!("Starting shell...");
+        trace!("Starting shell...");
         Ok(Shell {
             file_system: FileSystem::new()?,
         })
     }
 
     pub fn run(&mut self) -> Result<()> {
-
-
         let mut running = true;
         while running {
             print!("filesystem> ");
@@ -57,12 +45,13 @@ impl Shell {
                 _ => {
                     if let Err(e) = self.execute_command(cmd, args) {
                         error!("Error executing command: {}", e);
+                        eprintln!("Error: {}", e);
                     }
                 }
             }
         }
 
-        info!("Exiting shell...");
+        trace!("Exiting shell...");
         Ok(())
     }
 
@@ -73,17 +62,29 @@ impl Shell {
                 if args.len() != 1 {
                     return Err(ShellError::InvalidUsage.into());
                 }
+                #[cfg(feature = "debug")]
+                {
+                    trace!("Running create {}", args[0]);
+                }
                 self.file_system.create_file(args[0]).map_err(Into::into)
             }
             "cat" => {
                 if args.len() != 1 {
                     return Err(ShellError::InvalidUsage.into());
                 }
+                #[cfg(feature = "debug")]
+                {
+                    trace!("Running cat {}", args[0]);
+                }
                 self.file_system.read_file(args[0]).map_err(Into::into)
             }
             "ls" => {
                 if args.len() != 0 {
                     return Err(ShellError::InvalidUsage.into());
+                }
+                #[cfg(feature = "debug")]
+                {
+                    trace!("Running ls");
                 }
                 self.file_system.list_dir().map_err(Into::into)
             }

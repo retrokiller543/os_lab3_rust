@@ -1,3 +1,4 @@
+use std::mem;
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Copy, Clone)]
@@ -17,7 +18,11 @@ pub struct DirEntry {
     pub(crate) name: String,
     pub(crate) file_type: FileType,
     pub(crate) size: u64,
-    pub(crate) blk_num: u64,
+    pub(crate) blk_num: u16,
+}
+
+impl DirEntry {
+    pub const MAX_SIZE: usize = 55 + mem::size_of::<FileType>() + mem::size_of::<u64>() + mem::size_of::<u64>();
 }
 
 impl Default for DirEntry {

@@ -12,4 +12,10 @@ pub enum DiskError {
     DeserializationError(bincode::Error),
     #[error("Block position overflow")]
     PositionOverflow,
+    #[error("Seek error: {0}")]
+    SeekError(std::io::Error),
+    #[error("Error reading disk file: {0}")]
+    ReadDiskError(std::io::Error),
+    #[error("Error writing to disk file: {0}")]
+    WriteDiskError(std::io::Error),
 }
