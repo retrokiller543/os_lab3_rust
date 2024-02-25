@@ -1,0 +1,17 @@
+workspace = { members = ["rustic_disk", "file_system", "rustic_shell"] }
+[package]
+name = "os_lab3"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.79"
+serde = { version = "1.0.196", features = ["derive"] }
+serde_derive = "1.0.196"
+bincode = "2.0.0-rc.3"
+thiserror = "1.0.56"
+log = "0.4.20"
+env_logger = "0.11.1"
+rustic_shell = { path = "./rustic_shell" }
