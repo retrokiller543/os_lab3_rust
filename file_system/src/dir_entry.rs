@@ -1,16 +1,11 @@
 use serde_derive::{Deserialize, Serialize};
 use std::mem;
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Copy, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Copy, Clone)]
 pub enum FileType {
+    #[default]
     File,
     Directory,
-}
-
-impl Default for FileType {
-    fn default() -> Self {
-        FileType::File
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
@@ -37,20 +32,10 @@ impl Default for DirEntry {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Block {
     pub(crate) parent_entry: DirEntry,
     #[serde(skip_deserializing, skip_serializing)]
     pub(crate) blk_num: u64,
     pub(crate) entries: Vec<DirEntry>,
-}
-
-impl Default for Block {
-    fn default() -> Self {
-        Self {
-            parent_entry: Default::default(),
-            blk_num: 0,
-            entries: Vec::new(),
-        }
-    }
 }

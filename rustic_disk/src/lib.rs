@@ -1,12 +1,15 @@
 #![allow(non_snake_case)]
+#![allow(unused_variables)]
 pub mod errors;
 pub mod traits;
 
 use crate::errors::DiskError;
 use crate::traits::BlockStorage;
 use anyhow::Result;
-use bincode;
-use log::{debug, error, trace};
+//use bincode;
+use log::error;
+#[cfg(feature = "debug")]
+use log::{debug, trace};
 use serde::{de::DeserializeOwned, Serialize};
 use std::fs;
 use std::fs::{File, OpenOptions};
@@ -41,17 +44,21 @@ impl Disk {
     }
 
     fn get_block_position(&self, block_index: usize) -> Result<u64, DiskError> {
-        let position = block_index
-            .checked_mul(Self::BLOCK_SIZE)
-            .and_then(|p| Some(p as u64)) // Convert to u64, this step should not overflow given BLOCK_SIZE is usize
-            .ok_or(DiskError::PositionOverflow); // Convert None to a DiskError
 
         #[cfg(feature = "debug")]
         {
+            let position = block_index.checked_mul(Self::BLOCK_SIZE).map(|x| x as u64).ok_or(DiskError::PositionOverflow);
             trace!("Block position: {:?}", position);
+            position
+        }
+        #[cfg(not(feature = "debug"))]
+        {
+            block_index
+                .checked_mul(Self::BLOCK_SIZE)
+                .map(|x| x as u64)
+                .ok_or(DiskError::PositionOverflow)
         }
 
-        position
     }
 
     pub fn disk_exists() -> bool {

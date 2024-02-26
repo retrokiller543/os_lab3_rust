@@ -1,11 +1,7 @@
 use anyhow::Result;
-use env_logger::Env;
 use file_system::prelude::*;
-use log::{debug, error, info, trace, warn};
-use std::{
-    env,
-    io::{self, Write},
-};
+use log::{error, trace};
+use std::io::{self, Write};
 
 #[derive(Debug, thiserror::Error)]
 enum ShellError {
@@ -34,7 +30,7 @@ impl Shell {
             io::stdout().flush()?;
             let mut line = String::new();
             io::stdin().read_line(&mut line)?;
-            let cmd_line: Vec<&str> = line.trim().split_whitespace().collect();
+            let cmd_line: Vec<&str> = line.split_whitespace().collect();
             if cmd_line.is_empty() {
                 continue;
             }
@@ -82,7 +78,7 @@ impl Shell {
                 self.file_system.read_file(args[0]).map_err(Into::into)
             }
             "ls" => {
-                if args.len() != 0 {
+                if args.is_empty() {
                     return Err(ShellError::InvalidUsage.into());
                 }
                 #[cfg(feature = "debug")]
@@ -96,7 +92,7 @@ impl Shell {
     }
 
     fn format(&mut self, args: &[&str]) -> Result<()> {
-        if args.len() != 0 {
+        if args.is_empty() {
             return Err(ShellError::InvalidUsage.into());
         }
         self.file_system.format().map_err(Into::into)

@@ -1,7 +1,10 @@
+#![allow(unused_variables)]
+
 use crate::dir_entry::{DirEntry, FileType};
 use crate::errors::{FSError, FileError};
 use crate::traits::File;
-use crate::{FatType, FileSystem};
+use crate::FileSystem;
+#[cfg(feature = "debug")]
 use log::debug;
 use path_absolutize::*;
 use serde_derive::{Deserialize, Serialize};
@@ -74,7 +77,7 @@ impl File for FileSystem {
         };
 
         // find the first free block
-        let mut blk_num = self.get_free_block()?;
+        let blk_num = self.get_free_block()?;
 
         self.write_data(&file_data, blk_num)?;
 

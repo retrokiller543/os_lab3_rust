@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 mod dir_entry;
 mod directories;
 mod errors;
@@ -11,11 +12,11 @@ use crate::dir_entry::{Block, DirEntry, FileType};
 use crate::errors::FSError;
 use crate::files::FileData;
 use anyhow::Result;
+#[cfg(feature = "debug")]
 use log::{debug, trace};
 use rustic_disk::traits::BlockStorage;
 use rustic_disk::Disk;
 use serde::Serialize;
-use serde_big_array::BigArray;
 use serde_derive::Deserialize;
 use std::ops::{Index, IndexMut};
 
@@ -58,6 +59,12 @@ impl FAT {
 
     pub fn get(&self, index: usize) -> Option<&FatType> {
         self.0.get(index)
+    }
+}
+
+impl Default for FAT {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -235,7 +242,7 @@ impl FileSystem {
         let mut blk_num = start_blk;
 
         // Recursive closure to read blocks following the FAT
-        let mut read_blocks_recursively = |blk_num: &mut u16, data: &mut Vec<u8>| -> Result<()> {
+        let read_blocks_recursively = |blk_num: &mut u16, data: &mut Vec<u8>| -> Result<()> {
             loop {
                 match self.fat.get(*blk_num as usize) {
                     Some(&FatType::Taken(next_blk)) => {
