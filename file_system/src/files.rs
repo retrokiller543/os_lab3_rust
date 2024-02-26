@@ -54,6 +54,7 @@ impl File for FileSystem {
             data.push_str(&input_data);
             data.push('\n'); // Add a newline character after each line
         }
+        data.pop(); // Remove the last newline character
 
         #[cfg(feature = "debug")]
         {
