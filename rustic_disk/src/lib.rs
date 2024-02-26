@@ -44,10 +44,12 @@ impl Disk {
     }
 
     fn get_block_position(&self, block_index: usize) -> Result<u64, DiskError> {
-
         #[cfg(feature = "debug")]
         {
-            let position = block_index.checked_mul(Self::BLOCK_SIZE).map(|x| x as u64).ok_or(DiskError::PositionOverflow);
+            let position = block_index
+                .checked_mul(Self::BLOCK_SIZE)
+                .map(|x| x as u64)
+                .ok_or(DiskError::PositionOverflow);
             trace!("Block position: {:?}", position);
             position
         }
@@ -58,7 +60,6 @@ impl Disk {
                 .map(|x| x as u64)
                 .ok_or(DiskError::PositionOverflow)
         }
-
     }
 
     pub fn disk_exists() -> bool {
