@@ -192,7 +192,7 @@ impl FileSystem {
         // If the data fits within a single block, write it directly
         if serialized_data.len() <= Disk::BLOCK_SIZE {
             self.disk
-                .write_serilized_data(start_blk as usize, &serialized_data)?;
+                .write_raw_data(start_blk as usize, &serialized_data)?;
             // Update FAT for start_blk to EOF since it's the last block
             self.update_fat(start_blk, None)?; // Assuming update_fat takes an Option<u64> for the second param
             return Ok(());
@@ -209,7 +209,7 @@ impl FileSystem {
             } else {
                 first_iteration = false;
             }
-            self.disk.write_serilized_data(blk as usize, chunk)?;
+            self.disk.write_raw_data(blk as usize, chunk)?;
             let next_blk = if chunks.peek().is_some() {
                 Some(self.get_free_block()?)
             } else {
