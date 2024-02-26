@@ -1,8 +1,11 @@
 use anyhow::Result;
-use file_system::prelude::*;
-use log::{info, warn, error, debug, trace};
-use std::{io::{self, Write}, env};
 use env_logger::Env;
+use file_system::prelude::*;
+use log::{debug, error, info, trace, warn};
+use std::{
+    env,
+    io::{self, Write},
+};
 
 #[derive(Debug, thiserror::Error)]
 enum ShellError {

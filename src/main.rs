@@ -1,8 +1,8 @@
-use std::fs::File;
-use env_logger::{Builder, Env};
-use rustic_shell::Shell;
 use anyhow::Result;
 use chrono::Local;
+use env_logger::{Builder, Env};
+use rustic_shell::Shell;
+use std::fs::File;
 use std::io::Write;
 
 fn setup_logger() -> Result<()> {
@@ -22,7 +22,9 @@ fn setup_logger() -> Result<()> {
                 "[{} {} - {}:{}] {}",
                 Local::now().format("%Y-%m-%d %H:%M:%S"),
                 record.level(),
-                record.file().unwrap_or(record.module_path().unwrap_or("unknown")),
+                record
+                    .file()
+                    .unwrap_or(record.module_path().unwrap_or("unknown")),
                 record.line().unwrap_or(0),
                 record.args()
             )
@@ -31,8 +33,6 @@ fn setup_logger() -> Result<()> {
         .init();
     Ok(())
 }
-
-
 
 fn main() -> Result<()> {
     setup_logger()?;

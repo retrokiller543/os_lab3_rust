@@ -1,5 +1,5 @@
-use std::mem;
 use serde_derive::{Deserialize, Serialize};
+use std::mem;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Copy, Clone)]
 pub enum FileType {
@@ -22,7 +22,8 @@ pub struct DirEntry {
 }
 
 impl DirEntry {
-    pub const MAX_SIZE: usize = 55 + mem::size_of::<FileType>() + mem::size_of::<u64>() + mem::size_of::<u64>();
+    pub const MAX_SIZE: usize =
+        55 + mem::size_of::<FileType>() + mem::size_of::<u64>() + mem::size_of::<u64>();
 }
 
 impl Default for DirEntry {

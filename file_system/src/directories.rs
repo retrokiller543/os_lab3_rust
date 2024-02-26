@@ -1,7 +1,7 @@
-use crate::FileSystem;
-use crate::traits::Directory;
-use anyhow::Result;
 use crate::dir_entry::FileType;
+use crate::traits::Directory;
+use crate::FileSystem;
+use anyhow::Result;
 
 impl Directory for FileSystem {
     fn create_dir(&mut self, name: &str) -> Result<()> {
@@ -14,7 +14,10 @@ impl Directory for FileSystem {
 
     fn list_dir(&self) -> Result<()> {
         // Print column headers
-        println!("{:20} {:10} {:15} {:10}", "Name", "Type", "Size (Bytes)", "Block Number");
+        println!(
+            "{:20} {:10} {:15} {:10}",
+            "Name", "Type", "Size (Bytes)", "Block Number"
+        );
 
         for entry in &self.curr_block.entries {
             if !entry.name.is_empty() {
@@ -23,7 +26,10 @@ impl Directory for FileSystem {
                     FileType::Directory => "Directory",
                 };
                 // Format and print each entry according to the column widths
-                println!("{:20} {:10} {:15} {:10}", entry.name, entry_type, entry.size, entry.blk_num);
+                println!(
+                    "{:20} {:10} {:15} {:10}",
+                    entry.name, entry_type, entry.size, entry.blk_num
+                );
             }
         }
 

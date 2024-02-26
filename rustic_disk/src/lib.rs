@@ -1,17 +1,17 @@
 #![allow(non_snake_case)]
-pub mod traits;
 pub mod errors;
+pub mod traits;
 
-use std::fs;
-use anyhow::Result;
+use crate::errors::DiskError;
 use crate::traits::BlockStorage;
-use std::fs::{OpenOptions, File};
-use std::io::{self, Seek, SeekFrom, Read, Write};
-use std::path::Path;
-use serde::{Serialize, de::DeserializeOwned};
+use anyhow::Result;
 use bincode;
 use log::{debug, error, trace};
-use crate::errors::DiskError;
+use serde::{de::DeserializeOwned, Serialize};
+use std::fs;
+use std::fs::{File, OpenOptions};
+use std::io::{self, Read, Seek, SeekFrom, Write};
+use std::path::Path;
 
 const DISKNAME: &str = "diskfile.bin";
 
@@ -36,15 +36,13 @@ impl Disk {
                 trace!("Disk with size {} created", Self::DISK_SIZE);
             }
         }
-        let diskfile = OpenOptions::new()
-            .read(true)
-            .write(true)
-            .open(DISKNAME)?;
+        let diskfile = OpenOptions::new().read(true).write(true).open(DISKNAME)?;
         Ok(Disk { diskfile })
     }
 
     fn get_block_position(&self, block_index: usize) -> Result<u64, DiskError> {
-        let position = block_index.checked_mul(Self::BLOCK_SIZE)
+        let position = block_index
+            .checked_mul(Self::BLOCK_SIZE)
             .and_then(|p| Some(p as u64)) // Convert to u64, this step should not overflow given BLOCK_SIZE is usize
             .ok_or(DiskError::PositionOverflow); // Convert None to a DiskError
 
@@ -75,12 +73,17 @@ impl Disk {
 
 impl BlockStorage for Disk {
     /// Read data from the disk using the bincode deserialization
-    fn read_block<T: DeserializeOwned + std::fmt::Debug>(&self, block_index: usize) -> Result<T, DiskError> {
+    fn read_block<T: DeserializeOwned + std::fmt::Debug>(
+        &self,
+        block_index: usize,
+    ) -> Result<T, DiskError> {
         let mut file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
-        file.seek(SeekFrom::Start(position)).map_err(DiskError::SeekError)?;
+        file.seek(SeekFrom::Start(position))
+            .map_err(DiskError::SeekError)?;
         let mut buffer = vec![0u8; Self::BLOCK_SIZE];
-        file.read_exact(&mut buffer).map_err(DiskError::ReadDiskError)?;
+        file.read_exact(&mut buffer)
+            .map_err(DiskError::ReadDiskError)?;
         let data = bincode::deserialize(&buffer).map_err(DiskError::DeserializationError)?;
         #[cfg(feature = "debug")]
         {
@@ -93,13 +96,19 @@ impl BlockStorage for Disk {
     fn write_block<T: Serialize>(&self, block_index: usize, data: &T) -> Result<(), DiskError> {
         let serialized_data = bincode::serialize(data).map_err(DiskError::SerializationError)?;
         if serialized_data.len() > Self::BLOCK_SIZE {
-            error!("Data is {} bytes, which exceeds the block size of {}", serialized_data.len(), Self::BLOCK_SIZE);
+            error!(
+                "Data is {} bytes, which exceeds the block size of {}",
+                serialized_data.len(),
+                Self::BLOCK_SIZE
+            );
             return Err(DiskError::DataExceedsBlockSize);
         }
         let mut file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
-        file.seek(SeekFrom::Start(position)).map_err(DiskError::SeekError)?;
-        file.write_all(&serialized_data).map_err(DiskError::WriteDiskError)?;
+        file.seek(SeekFrom::Start(position))
+            .map_err(DiskError::SeekError)?;
+        file.write_all(&serialized_data)
+            .map_err(DiskError::WriteDiskError)?;
         #[cfg(feature = "debug")]
         {
             debug!("{:?} bytes written to the disk", serialized_data.len());
@@ -110,12 +119,17 @@ impl BlockStorage for Disk {
     /// Write raw data to the disk
     fn write_serilized_data(&self, block_index: usize, data: &[u8]) -> Result<(), DiskError> {
         if data.len() > Self::BLOCK_SIZE {
-            error!("Data is {} bytes, which exceeds the block size of {}", data.len(), Self::BLOCK_SIZE);
+            error!(
+                "Data is {} bytes, which exceeds the block size of {}",
+                data.len(),
+                Self::BLOCK_SIZE
+            );
             return Err(DiskError::DataExceedsBlockSize);
         }
         let mut file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
-        file.seek(SeekFrom::Start(position)).map_err(DiskError::SeekError)?;
+        file.seek(SeekFrom::Start(position))
+            .map_err(DiskError::SeekError)?;
         file.write_all(data).map_err(DiskError::WriteDiskError)?;
         Ok(())
     }
@@ -124,20 +138,20 @@ impl BlockStorage for Disk {
     fn read_serilized_data(&self, block_index: usize) -> Result<Vec<u8>, DiskError> {
         let mut file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
-        file.seek(SeekFrom::Start(position)).map_err(DiskError::SeekError)?;
+        file.seek(SeekFrom::Start(position))
+            .map_err(DiskError::SeekError)?;
         let mut buffer = vec![0u8; Self::BLOCK_SIZE];
-        file.read_exact(&mut buffer).map_err(DiskError::ReadDiskError)?;
+        file.read_exact(&mut buffer)
+            .map_err(DiskError::ReadDiskError)?;
         Ok(buffer)
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
     use serde_derive::Deserialize;
+    use std::fs;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct TestData {

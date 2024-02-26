@@ -1,13 +1,13 @@
-use std::io;
-use std::io::BufRead;
-use crate::{FatType, FileSystem};
+use crate::dir_entry::{DirEntry, FileType};
+use crate::errors::{FSError, FileError};
 use crate::traits::File;
-use std::path::Path;
+use crate::{FatType, FileSystem};
 use log::debug;
 use path_absolutize::*;
 use serde_derive::{Deserialize, Serialize};
-use crate::dir_entry::{DirEntry, FileType};
-use crate::errors::{FileError, FSError};
+use std::io;
+use std::io::BufRead;
+use std::path::Path;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct FileData {
@@ -19,8 +19,16 @@ impl File for FileSystem {
     fn create_file(&mut self, path: &str) -> anyhow::Result<()> {
         let binding = Path::new(path).absolutize()?;
         let path = binding.to_str().ok_or(FSError::PathError)?;
-        let parent = Path::new(&path).parent().unwrap().to_str().ok_or(FSError::PathError)?;
-        let name = Path::new(&path).file_name().unwrap().to_str().ok_or(FSError::PathError)?;
+        let parent = Path::new(&path)
+            .parent()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?;
+        let name = Path::new(&path)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?;
 
         #[cfg(feature = "debug")]
         {
@@ -100,8 +108,16 @@ impl File for FileSystem {
     fn read_file(&self, name: &str) -> anyhow::Result<()> {
         let binding = Path::new(name).absolutize()?;
         let path = binding.to_str().ok_or(FSError::PathError)?;
-        let parent = Path::new(&path).parent().unwrap().to_str().ok_or(FSError::PathError)?;
-        let name = Path::new(&path).file_name().unwrap().to_str().ok_or(FSError::PathError)?;
+        let parent = Path::new(&path)
+            .parent()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?;
+        let name = Path::new(&path)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?;
 
         #[cfg(feature = "debug")]
         {

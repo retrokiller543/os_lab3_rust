@@ -1,12 +1,12 @@
-use crate::{FatType, FAT_BLK, FileSystem, ROOT_BLK, FAT};
-use crate::traits::Format;
-use anyhow::Result;
-use rustic_disk::Disk;
-use rustic_disk::traits::BlockStorage;
 use crate::dir_entry::{Block, DirEntry, FileType};
+use crate::traits::Format;
+use crate::{FatType, FileSystem, FAT, FAT_BLK, ROOT_BLK};
+use anyhow::Result;
+use rustic_disk::traits::BlockStorage;
+use rustic_disk::Disk;
 
 impl Format for FileSystem {
-    fn format(&mut self) -> Result<()>{
+    fn format(&mut self) -> Result<()> {
         // disk should always exist since we handle making a dsk in the constructor
         if Disk::disk_exists() {
             Disk::delete_disk()?;
@@ -31,7 +31,6 @@ impl Format for FileSystem {
         fat[FAT_BLK as usize] = FatType::EOF;
         self.disk.write_block(FAT_BLK as usize, &fat)?;
         self.fat = fat;
-
 
         Ok(())
     }

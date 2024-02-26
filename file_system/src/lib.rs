@@ -1,23 +1,23 @@
-mod utils;
-pub mod traits;
 mod dir_entry;
-mod format;
+mod directories;
 mod errors;
 mod files;
+mod format;
 pub mod prelude;
-mod directories;
+pub mod traits;
+mod utils;
 
-use serde_big_array::BigArray;
-use std::ops::{Index, IndexMut};
-use rustic_disk::Disk;
-use rustic_disk::traits::BlockStorage;
-use anyhow::Result;
-use log::{debug, trace};
-use serde::Serialize;
-use serde_derive::Deserialize;
 use crate::dir_entry::{Block, DirEntry, FileType};
 use crate::errors::FSError;
 use crate::files::FileData;
+use anyhow::Result;
+use log::{debug, trace};
+use rustic_disk::traits::BlockStorage;
+use rustic_disk::Disk;
+use serde::Serialize;
+use serde_big_array::BigArray;
+use serde_derive::Deserialize;
+use std::ops::{Index, IndexMut};
 
 const ROOT_BLK: u64 = 0;
 const FAT_BLK: u64 = 1;
@@ -25,7 +25,7 @@ const FAT_BLK: u64 = 1;
 pub struct FileSystem {
     disk: Disk,
     curr_block: Block,
-    fat: FAT
+    fat: FAT,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy)]
@@ -38,7 +38,7 @@ pub enum FatType {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct FAT(
     //#[serde(with = "BigArray")]
-    Vec<FatType>
+    Vec<FatType>,
 );
 
 impl FAT {
@@ -105,7 +105,11 @@ impl FileSystem {
             // print size of DirEntry
             debug!("Size of DirEntry: {}", DirEntry::MAX_SIZE);
             // print size of Block
-            debug!("Size of Block: {} + {}", std::mem::size_of::<Block>(), std::mem::size_of::<DirEntry>() * Self::NUM_ENTRIES);
+            debug!(
+                "Size of Block: {} + {}",
+                std::mem::size_of::<Block>(),
+                std::mem::size_of::<DirEntry>() * Self::NUM_ENTRIES
+            );
             // print size of FAT
             debug!("Size of FAT: {}", std::mem::size_of::<FAT>());
             // print size of FATType
@@ -140,12 +144,17 @@ impl FileSystem {
             trace!("FAT: {:?}", fat);
         }
 
-        Ok(FileSystem { disk, curr_block, fat })
+        Ok(FileSystem {
+            disk,
+            curr_block,
+            fat,
+        })
     }
 
     pub fn write_curr_blk(&self) -> Result<()> {
         let block_to_write = self.curr_block.blk_num;
-        self.disk.write_block(block_to_write as usize, &self.curr_block)?;
+        self.disk
+            .write_block(block_to_write as usize, &self.curr_block)?;
         Ok(())
     }
 
@@ -157,7 +166,7 @@ impl FileSystem {
                 FatType::Free => {
                     blk = index as u16;
                     break;
-                },
+                }
                 _ => continue,
             }
         }
@@ -175,7 +184,8 @@ impl FileSystem {
 
         // If the data fits within a single block, write it directly
         if serialized_data.len() <= Disk::BLOCK_SIZE {
-            self.disk.write_serilized_data(start_blk as usize, &serialized_data)?;
+            self.disk
+                .write_serilized_data(start_blk as usize, &serialized_data)?;
             // Update FAT for start_blk to EOF since it's the last block
             self.update_fat(start_blk, None)?; // Assuming update_fat takes an Option<u64> for the second param
             return Ok(());
@@ -210,10 +220,10 @@ impl FileSystem {
         match next_blk {
             Some(next_blk) => {
                 self.fat[blk as usize] = FatType::Taken(next_blk);
-            },
+            }
             None => {
                 self.fat[blk as usize] = FatType::EOF;
-            },
+            }
         }
         self.disk.write_block(FAT_BLK as usize, &self.fat)?;
         Ok(())
@@ -232,12 +242,12 @@ impl FileSystem {
                         let block: FileData = self.disk.read_block(*blk_num as usize)?;
                         data.extend_from_slice(&block.data);
                         *blk_num = next_blk;
-                    },
+                    }
                     Some(&FatType::EOF) => {
                         let block: FileData = self.disk.read_block(*blk_num as usize)?;
                         data.extend_from_slice(&block.data);
                         break;
-                    },
+                    }
                     _ => return Err(FSError::InvalidBlockReference.into()),
                 }
             }
