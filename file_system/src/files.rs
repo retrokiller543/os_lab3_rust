@@ -53,6 +53,17 @@ impl File for FileSystem {
             }
         }
 
+	let mut has_space: bool = false;
+
+	// do we have space in the block for the file?
+	for item in self.curr_block.entries.iter() {
+		if item.name.is_empty() { has_space = true; }
+	}
+
+	if has_space == false {
+		return Err(FileError::FileNotFound.into()); // make new error here
+	}
+	
         // read data from user
         let mut data = String::new();
 
