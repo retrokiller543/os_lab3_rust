@@ -10,11 +10,55 @@ use path_absolutize::*;
 use serde_derive::{Deserialize, Serialize};
 use std::io;
 use std::io::BufRead;
+use std::ops::Add;
 use std::path::Path;
+use log::trace;
+use crate::utils::FixedString;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct FileData {
     pub(crate) data: Vec<u8>,
+}
+
+impl FileData {
+    pub fn new(data: Vec<u8>) -> Self {
+        FileData { data }
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn get_size(&self) -> usize {
+        let serialized = bincode::serialize(&self).unwrap();
+        serialized.len()
+    }
+}
+
+impl From<&str> for FileData {
+    fn from(data: &str) -> Self {
+        FileData {
+            data: data.as_bytes().to_vec(),
+        }
+    }
+}
+
+impl From<String> for FileData {
+    fn from(data: String) -> Self {
+        FileData {
+            data: data.as_bytes().to_vec(),
+        }
+    }
+}
+
+impl Add for FileData {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let mut data = self.data;
+        data.extend(other.data);
+        FileData { data }
+    }
 }
 
 impl File for FileSystem {
@@ -52,17 +96,6 @@ impl File for FileSystem {
                 return Err(FileError::FileAlreadyExists.into());
             }
         }
-
-	let mut has_space: bool = false;
-
-	// do we have space in the block for the file?
-	for item in self.curr_block.entries.iter() {
-		if item.name.is_empty() { has_space = true; }
-	}
-
-	if has_space == false {
-		return Err(FileError::FileNotFound.into()); // make new error here
-	}
 	
         // read data from user
         let mut data = String::new();
@@ -83,39 +116,56 @@ impl File for FileSystem {
             debug!("Data: {}", data);
         }
 
-        let file_data = FileData {
-            data: data.as_bytes().to_vec(),
-        };
+        let file_data = FileData::from(data);
 
         // find the first free block
         let blk_num = self.get_free_block()?;
+
+        #[cfg(feature = "debug")]
+        {
+            trace!("Writing file data");
+            debug!("Free block: {}", blk_num);
+            debug!("Data size on disk: {}", file_data.get_size());
+        }
 
         self.write_data(&file_data, blk_num)?;
 
         let entry = DirEntry {
             name: name.into(),
             file_type: FileType::File,
-            size: data.len() as u64,
+            size: file_data.get_size() as u64,
             blk_num,
         };
 
         #[cfg(feature = "debug")]
         {
             debug!("Entry: {:?}", entry);
+            debug!("New entry size: {}", entry.get_size());
         }
 
         // update size of the parent block
         self.curr_block.parent_entry.size += entry.size;
 
-        self.curr_block.entries.push(entry);
+        self.curr_block.add_entry(entry)?;
+
+        #[cfg(feature = "debug")]
+        {
+            trace!("Writing block to disk");
+            debug!("Block: {:?}", self.curr_block);
+            debug!("Block size on disk: {}", self.curr_block.get_size());
+        }
 
         self.write_curr_blk()?;
 
         Ok(())
     }
 
-    fn delete_file(&mut self, name: &str) -> anyhow::Result<()> {
-        todo!()
+    fn delete_file(&mut self, entry: &DirEntry) -> anyhow::Result<()> {
+        self.clear_file_data(entry.blk_num)?;
+        self.curr_block.remove_entry(&entry.name)?;
+
+        self.write_curr_blk()?;
+        Ok(())
     }
 
     /// the cat function
@@ -175,7 +225,51 @@ impl File for FileSystem {
         Ok(())
     }
 
-    fn write_file(&mut self, name: &str) -> anyhow::Result<()> {
-        todo!()
+    fn append_file(&mut self, source: &str, dest: &str) -> anyhow::Result<()> {
+        let src_binding = Path::new(source).absolutize()?;
+        let src_path = src_binding.to_str().ok_or(FSError::PathError)?;
+        let src_parent = Path::new(&src_path)
+            .parent()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?;
+        let src_name: FixedString = Path::new(&src_path)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?.into();
+
+        let dest_binding = Path::new(dest).absolutize()?;
+        let dest_path = dest_binding.to_str().ok_or(FSError::PathError)?;
+        let dest_parent = Path::new(&dest_path).parent().unwrap().to_str().ok_or(FSError::PathError)?;
+        let dest_name: FixedString = Path::new(&dest_path).file_name().unwrap().to_str().ok_or(FSError::PathError)?.into();
+
+        let mut new_data: FileData;
+
+        {
+            let src_entry = self.curr_block.get_entry(&src_name).ok_or(FileError::FileNotFound)?;
+            let dest_entry = self.curr_block.get_entry(&dest_name).ok_or(FileError::FileNotFound)?;
+
+            if src_entry.file_type != FileType::File || dest_entry.file_type != FileType::File {
+                return Err(FileError::FileIsDirectory.into());
+            }
+
+            let src_data = self.read_file_data(src_entry.blk_num)?;
+            let dest_data = self.read_file_data(dest_entry.blk_num)?;
+
+            new_data = dest_data + "\n".into() + src_data;
+
+            self.clear_file_data(dest_entry.blk_num)?;
+            self.write_data(&new_data, dest_entry.blk_num)?;
+        }
+
+        let dest_entry = self.curr_block.get_entry_mut(&dest_name).ok_or(FileError::FileNotFound)?;
+
+        // update size of the dest entry
+        dest_entry.size = new_data.len() as u64;
+
+        self.write_curr_blk()?;
+
+        Ok(())
     }
 }

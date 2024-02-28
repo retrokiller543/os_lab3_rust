@@ -38,7 +38,7 @@ impl Display for FixedString {
 }
 
 impl FixedString {
-    fn new(value: String) -> Result<Self> {
+    pub(crate) fn new(value: String) -> Result<Self> {
         if value.len() > 56 {
             return Err(NameError::NameTooLong(value.len()).into());
         }

@@ -7,6 +7,8 @@ mod format;
 pub mod prelude;
 pub mod traits;
 mod utils;
+mod other;
+mod tests;
 
 use crate::dir_entry::{Block, DirEntry, FileType};
 use crate::errors::FSError;
@@ -104,23 +106,35 @@ impl<'a> Iterator for FatIterator<'a> {
 }
 
 impl FileSystem {
-    pub const NUM_ENTRIES: usize = Disk::BLOCK_SIZE / DirEntry::MAX_SIZE - 1;
+    pub fn num_entries() -> usize {
+        Disk::BLOCK_SIZE / DirEntry::calculate_max_size()
+    }
+
     pub fn new() -> Result<Self> {
         #[cfg(feature = "debug")]
         {
             trace!("Creating new file system...");
+            debug!("Size of Disk: {}", std::mem::size_of::<Disk>());
+            debug!("Max number of entries: {}", Self::num_entries());
             // print size of DirEntry
-            debug!("Size of DirEntry: {}", DirEntry::MAX_SIZE);
+            debug!("Max Size of DirEntry: {}", DirEntry::calculate_max_size());
             // print size of Block
             debug!(
-                "Size of Block: {} + {}",
-                std::mem::size_of::<Block>(),
-                std::mem::size_of::<DirEntry>() * Self::NUM_ENTRIES
+                "Max Size of Block: {}",
+                Block::calculate_max_size()
             );
             // print size of FAT
             debug!("Size of FAT: {}", std::mem::size_of::<FAT>());
             // print size of FATType
             debug!("Size of FATType: {}", std::mem::size_of::<FatType>());
+            // the expected size of an empty dir block
+            let mut empty_block = Block::default();
+            empty_block.entries = vec![DirEntry::default(); Self::num_entries()];
+            debug!("Size of empty DirBlock: {}", empty_block.get_size());
+            // the max size of a dir block
+            let mut max_block = Block::default();
+            max_block.entries = vec![DirEntry::gen_max_size_entry(); Self::num_entries()];
+            debug!("Size of max DirBlock: {}", max_block.get_size());
         }
 
         let (curr_block, fat, disk) = if !Disk::disk_exists() {
@@ -133,7 +147,7 @@ impl FileSystem {
                     ..Default::default()
                 },
                 blk_num: 0,
-                entries: vec![DirEntry::default(); Self::NUM_ENTRIES], // -1 to account for the parent entry
+                entries: vec![DirEntry::default(); Self::num_entries()],
             };
             disk.write_block(0, &root_block)?;
             disk.write_block(1, &fat)?;
@@ -267,6 +281,36 @@ impl FileSystem {
         Ok(data)
     }
 
+    pub fn clear_file_data(&self, start_blk: u16) -> Result<()> {
+        let mut blk_num = start_blk;
+        let zero_data = vec![0u8; Disk::BLOCK_SIZE];
+
+        // Recursive closure to clear blocks following the FAT
+        let clear_blocks_recursively = |blk_num: &mut u16| -> Result<()> {
+            loop {
+                match self.fat.get(*blk_num as usize) {
+                    Some(&FatType::Taken(next_blk)) => {
+                        // Instead of reading, we write zeroes to the block
+                        self.disk.write_raw_data(*blk_num as usize, &zero_data)?;
+                        *blk_num = next_blk;
+                    }
+                    Some(&FatType::EOF) => {
+                        // Clear the EOF block as well
+                        self.disk.write_raw_data(*blk_num as usize, &zero_data)?;
+                        break;
+                    }
+                    _ => return Err(FSError::InvalidBlockReference.into()),
+                }
+            }
+            Ok(())
+        };
+
+        // Call the recursive clear function
+        clear_blocks_recursively(&mut blk_num)?;
+
+        Ok(())
+    }
+
     pub fn read_blk(&self, blk: u64) -> Result<Block> {
         let block: Block = self.disk.read_block(blk as usize)?;
         Ok(block)
@@ -288,7 +332,7 @@ mod test {
     fn test_file_system_write_curr_blk() {
         let mut fs = FileSystem::new().unwrap();
         let entry = DirEntry {
-            name: "test".to_string(),
+            name: "test".into(),
             file_type: FileType::File,
             size: 0,
             blk_num: 0,

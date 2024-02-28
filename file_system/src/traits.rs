@@ -1,4 +1,5 @@
 use anyhow::Result;
+use crate::dir_entry::DirEntry;
 
 pub trait Format {
     fn format(&mut self) -> Result<()>;
@@ -6,9 +7,9 @@ pub trait Format {
 
 pub trait File {
     fn create_file(&mut self, name: &str) -> Result<()>;
-    fn delete_file(&mut self, name: &str) -> Result<()>;
+    fn delete_file(&mut self, entry: &DirEntry) -> Result<()>;
     fn read_file(&self, name: &str) -> Result<()>;
-    fn write_file(&mut self, name: &str) -> Result<()>;
+    fn append_file(&mut self, source: &str, dest: &str) -> Result<()>;
 }
 
 pub trait Directory {
@@ -18,6 +19,6 @@ pub trait Directory {
 }
 
 pub trait DirEntryHandling {
-    fn move_entry(&self, source: &str, dest: &str) -> Result<()>;
-    fn copy_entry(&self, source: &str, dest: &str) -> Result<()>;
+    fn move_entry(&mut self, source: &str, dest: &str) -> Result<()>;
+    fn copy_entry(&mut self, source: &str, dest: &str) -> Result<()>;
 }

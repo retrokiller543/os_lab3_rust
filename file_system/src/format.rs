@@ -21,7 +21,7 @@ impl Format for FileSystem {
                 ..Default::default()
             },
             blk_num: 0,
-            entries: vec![DirEntry::default(); Self::NUM_ENTRIES],
+            entries: vec![DirEntry::default(); Self::num_entries()],
         };
 
         self.disk = Disk::new()?;
