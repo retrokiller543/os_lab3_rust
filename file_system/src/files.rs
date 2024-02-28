@@ -48,7 +48,7 @@ impl File for FileSystem {
 
         // make code to check if file exists and parent exists
         for entry in self.curr_block.entries.iter() {
-            if entry.name == name {
+            if entry.name == name.into() {
                 return Err(FileError::FileAlreadyExists.into());
             }
         }
@@ -93,7 +93,7 @@ impl File for FileSystem {
         self.write_data(&file_data, blk_num)?;
 
         let entry = DirEntry {
-            name: name.to_string(),
+            name: name.into(),
             file_type: FileType::File,
             size: data.len() as u64,
             blk_num,
@@ -147,7 +147,7 @@ impl File for FileSystem {
         let mut file_entry: &DirEntry = &DirEntry::default();
 
         for entry in self.curr_block.entries.iter() {
-            if entry.name == name {
+            if entry.name == name.into() {
                 file_entry = entry;
             }
         }

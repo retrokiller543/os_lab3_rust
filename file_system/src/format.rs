@@ -16,7 +16,7 @@ impl Format for FileSystem {
 
         let blk = Block {
             parent_entry: DirEntry {
-                name: "/".to_string(),
+                name: "root".into(),
                 file_type: FileType::Directory,
                 ..Default::default()
             },
