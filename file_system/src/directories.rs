@@ -1,8 +1,9 @@
-use crate::dir_entry::{Block, DirEntry, FileType};
-use crate::traits::Directory;
-use crate::FileSystem;
 use anyhow::Result;
+
+use crate::dir_entry::{Block, DirEntry, FileType};
 use crate::errors::FileError;
+use crate::FileSystem;
+use crate::traits::Directory;
 use crate::utils::path_handler::{absolutize_from, split_path};
 
 impl Directory for FileSystem {

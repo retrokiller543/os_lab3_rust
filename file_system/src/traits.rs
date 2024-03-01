@@ -1,4 +1,5 @@
 use anyhow::Result;
+
 use crate::dir_entry::DirEntry;
 
 pub trait Format {

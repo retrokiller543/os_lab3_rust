@@ -1,7 +1,8 @@
-use serde_derive::{Deserialize, Serialize};
-use crate::FileSystem;
 use anyhow::Result;
+use serde_derive::{Deserialize, Serialize};
+
 use crate::errors::FileError;
+use crate::FileSystem;
 use crate::utils::fixed_str::FixedString;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Copy, Clone)]

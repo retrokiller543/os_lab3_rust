@@ -4,7 +4,8 @@ mod path_tests;
 #[cfg(test)]
 mod tests {
     use rustic_disk::Disk;
-    use crate::dir_entry::{DirEntry, FileType, Block};
+
+    use crate::dir_entry::{Block, DirEntry, FileType};
     use crate::FileSystem;
     use crate::utils::fixed_str::FixedString;
 

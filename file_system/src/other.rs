@@ -1,10 +1,12 @@
 use std::path::Path;
-use crate::traits::{DirEntryHandling, File};
+
 use anyhow::Result;
 use path_absolutize::Absolutize;
+
 use crate::dir_entry::FileType;
 use crate::errors::{FileError, FSError};
 use crate::FileSystem;
+use crate::traits::{DirEntryHandling, File};
 use crate::utils::fixed_str::FixedString;
 
 impl FileSystem {

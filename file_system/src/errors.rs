@@ -1,4 +1,5 @@
 use thiserror::Error;
+
 use crate::utils::fixed_str::FixedString;
 
 #[derive(Error, Debug)]

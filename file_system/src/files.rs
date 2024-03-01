@@ -1,17 +1,19 @@
 #![allow(unused_variables)]
 
-use crate::dir_entry::{DirEntry, FileType};
-use crate::errors::{FSError, FileError};
-use crate::traits::File;
-use crate::FileSystem;
-#[cfg(feature = "debug")]
-use log::{debug, trace};
-use path_absolutize::*;
-use serde_derive::{Deserialize, Serialize};
 use std::io;
 use std::io::BufRead;
 use std::ops::Add;
 use std::path::Path;
+
+#[cfg(feature = "debug")]
+use log::{debug, trace};
+use path_absolutize::*;
+use serde_derive::{Deserialize, Serialize};
+
+use crate::dir_entry::{DirEntry, FileType};
+use crate::errors::{FileError, FSError};
+use crate::FileSystem;
+use crate::traits::File;
 use crate::utils::fixed_str::FixedString;
 use crate::utils::path_handler::{absolutize_from, split_path};
 

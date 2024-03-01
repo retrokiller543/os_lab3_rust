@@ -1,4 +1,20 @@
 #![allow(unused_variables)]
+
+use std::ops::{Index, IndexMut};
+
+use anyhow::Result;
+#[cfg(feature = "debug")]
+use log::{debug, trace};
+use serde::Serialize;
+use serde_derive::Deserialize;
+
+use rustic_disk::Disk;
+use rustic_disk::traits::BlockStorage;
+
+use crate::dir_entry::{Block, DirEntry, FileType};
+use crate::errors::FSError;
+use crate::files::FileData;
+
 mod dir_entry;
 mod directories;
 mod errors;
@@ -9,18 +25,6 @@ pub mod traits;
 mod utils;
 mod other;
 mod tests;
-
-use crate::dir_entry::{Block, DirEntry, FileType};
-use crate::errors::FSError;
-use crate::files::FileData;
-use anyhow::Result;
-#[cfg(feature = "debug")]
-use log::{debug, trace};
-use rustic_disk::traits::BlockStorage;
-use rustic_disk::Disk;
-use serde::Serialize;
-use serde_derive::Deserialize;
-use std::ops::{Index, IndexMut};
 
 const ROOT_BLK: u64 = 0;
 const FAT_BLK: u64 = 1;

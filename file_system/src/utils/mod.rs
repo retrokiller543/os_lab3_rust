@@ -1,12 +1,15 @@
 // Helper functions and structs
 
-pub mod fixed_str;
-pub(crate) mod path_handler;
 use anyhow::Result;
+
 use rustic_disk::traits::BlockStorage;
+
+use crate::{FileSystem, ROOT_BLK};
 use crate::dir_entry::{Block, DirEntry};
 use crate::errors::FileError;
-use crate::{FileSystem, ROOT_BLK};
+
+pub mod fixed_str;
+pub(crate) mod path_handler;
 
 impl FileSystem {
     pub fn read_dir_block(&self, entry: &DirEntry) -> Result<Block> {
