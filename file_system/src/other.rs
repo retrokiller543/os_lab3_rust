@@ -5,7 +5,7 @@ use path_absolutize::Absolutize;
 use crate::dir_entry::FileType;
 use crate::errors::{FileError, FSError};
 use crate::FileSystem;
-use crate::utils::FixedString;
+use crate::utils::fixed_str::FixedString;
 
 impl FileSystem {
     pub fn remove_entry(&mut self, name: &str) -> Result<()> {

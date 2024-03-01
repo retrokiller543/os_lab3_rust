@@ -1,11 +1,38 @@
-use crate::dir_entry::FileType;
+use crate::dir_entry::{Block, DirEntry, FileType};
 use crate::traits::Directory;
 use crate::FileSystem;
 use anyhow::Result;
+use crate::errors::FileError;
+use crate::utils::path_handler::{absolutize_from, split_path};
 
 impl Directory for FileSystem {
-    fn create_dir(&mut self, name: &str) -> Result<()> {
-        unimplemented!()
+    fn create_dir(&mut self, path: &str) -> Result<()> {
+        let abs_path = absolutize_from(path, &self.curr_block.path);
+        let (parent, name) = split_path(abs_path);
+
+        if name.len() > 55 {
+            return Err(FileError::FilenameTooLong.into());
+        } else if name.is_empty() {
+            return Err(FileError::InvalidFilename(name.to_string()).into());
+        }
+
+        match self.curr_block.get_entry(&name.clone().into()) {
+            Some(entry) => {
+                return if entry.file_type == FileType::Directory {
+                    Err(FileError::DirectoryExists(name.into()).into())
+                } else {
+                    Err(FileError::FileExists(name.into()).into())
+                }
+            },
+            None => {
+                let new_entry = DirEntry::new(name.into(), FileType::Directory, 0, self.get_free_block()?);
+                let new_block = Block::new(new_entry.clone(), new_entry.blk_num.clone());
+                self.write_data::<Block>(&new_block, new_entry.blk_num)?;
+                self.curr_block.add_entry(new_entry)?;
+                self.write_curr_blk()?;
+            }
+        }
+        Ok(())
     }
 
     fn delete_dir(&mut self, name: &str) -> Result<()> {

@@ -1,9 +1,8 @@
 use serde_derive::{Deserialize, Serialize};
-use std::mem;
 use crate::FileSystem;
-use crate::utils::FixedString;
 use anyhow::Result;
 use crate::errors::FileError;
+use crate::utils::fixed_str::FixedString;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Copy, Clone)]
 pub enum FileType {
@@ -21,6 +20,15 @@ pub struct DirEntry {
 }
 
 impl DirEntry {
+    pub fn new(name: FixedString, file_type: FileType, size: u64, blk_num: u16) -> Self {
+        DirEntry {
+            name,
+            file_type,
+            size,
+            blk_num,
+        }
+    }
+
     pub fn calculate_max_size() -> usize {
         let example_entry = Self::gen_max_size_entry();
         let serialized = bincode::serialize(&example_entry).unwrap();
@@ -45,15 +53,19 @@ impl DirEntry {
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Block {
     #[serde(skip_deserializing, skip_serializing)]
+    pub(crate) path: String,
+    #[serde(skip_deserializing, skip_serializing)]
     pub(crate) parent_entry: DirEntry,
     #[serde(skip_deserializing, skip_serializing)]
-    pub(crate) blk_num: u64,
+    pub(crate) blk_num: u16,
     pub(crate) entries: Vec<DirEntry>,
 }
 
 impl Block {
-    pub fn new(parent_entry: DirEntry, blk_num: u64, entries: Vec<DirEntry>) -> Self {
+    pub fn new(parent_entry: DirEntry, blk_num: u16) -> Self {
+        let entries = vec![DirEntry::default(); FileSystem::num_entries()];
         Block {
+            path: "".to_string(),
             parent_entry,
             blk_num,
             entries,
@@ -67,8 +79,9 @@ impl Block {
 
     pub fn gen_max_size_block() -> Block {
         Block {
+            path: "".to_string(),
             parent_entry: DirEntry::gen_max_size_entry(),
-            blk_num: u64::MAX,
+            blk_num: u16::MAX,
             entries: vec![DirEntry::gen_max_size_entry(); FileSystem::num_entries()]
         }
     }

@@ -5,15 +5,15 @@ use crate::errors::{FSError, FileError};
 use crate::traits::File;
 use crate::FileSystem;
 #[cfg(feature = "debug")]
-use log::debug;
+use log::{debug, trace};
 use path_absolutize::*;
 use serde_derive::{Deserialize, Serialize};
 use std::io;
 use std::io::BufRead;
 use std::ops::Add;
 use std::path::Path;
-use log::trace;
-use crate::utils::FixedString;
+use crate::utils::fixed_str::FixedString;
+use crate::utils::path_handler::{absolutize_from, split_path};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct FileData {
@@ -64,22 +64,13 @@ impl Add for FileData {
 impl File for FileSystem {
     /// # Create a file in the current directory
     fn create_file(&mut self, path: &str) -> anyhow::Result<()> {
-        let binding = Path::new(path).absolutize()?;
-        let path = binding.to_str().ok_or(FSError::PathError)?;
-        let parent = Path::new(&path)
-            .parent()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?;
-        let name = Path::new(&path)
-            .file_name()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?;
+        let abs_path = absolutize_from(path, &self.curr_block.path);
+        let (parent, name) = split_path(abs_path.clone());
 
         #[cfg(feature = "debug")]
         {
             debug!("Path: {}", path);
+            debug!("Abs path: {}", abs_path);
             debug!("Parent: {}", parent);
             debug!("Name: {}", name);
         }
@@ -92,7 +83,7 @@ impl File for FileSystem {
 
         // make code to check if file exists and parent exists
         for entry in self.curr_block.entries.iter() {
-            if entry.name == name.into() {
+            if entry.name == name.clone().into() {
                 return Err(FileError::FileAlreadyExists.into());
             }
         }

@@ -141,6 +141,7 @@ impl FileSystem {
             let disk = Disk::new()?;
             let fat = FAT::new();
             let root_block = Block {
+                path: "/".to_string(),
                 parent_entry: DirEntry {
                     name: "/".into(),
                     file_type: FileType::Directory,

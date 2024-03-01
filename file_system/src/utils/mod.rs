@@ -1,101 +1,12 @@
 // Helper functions and structs
 
-use serde::{Serialize, Deserialize, Serializer, Deserializer};
-use serde::de::{self, Visitor};
-use std::fmt;
-use std::fmt::Display;
+pub mod fixed_str;
+pub(crate) mod path_handler;
 use anyhow::Result;
 use rustic_disk::traits::BlockStorage;
 use crate::dir_entry::{Block, DirEntry};
-use crate::FileSystem;
-
-#[derive(Debug, Clone, PartialEq, thiserror::Error, Serialize, Deserialize)]
-enum NameError {
-    #[error("Name too long: found {0}, max length is 56 including null terminator.")]
-    NameTooLong(usize),
-    #[error("Invalid name: {0}")]
-    InvalidName(String),
-}
-
-#[derive(Debug, Default, Clone, PartialEq)]
-pub struct FixedString {
-    pub value: String,
-}
-
-impl From<String> for FixedString {
-    fn from(value: String) -> Self {
-        FixedString::new(value).unwrap()
-    }
-}
-
-impl From<&str> for FixedString {
-    fn from(value: &str) -> Self {
-        FixedString::new(value.to_owned()).unwrap()
-    }
-}
-
-impl Display for FixedString {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.value.trim_end_matches('\0'))
-    }
-}
-
-impl FixedString {
-    pub(crate) fn new(value: String) -> Result<Self> {
-        if value.len() > 56 {
-            return Err(NameError::NameTooLong(value.len()).into());
-        }
-
-        Ok(FixedString { value })
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.value.is_empty()
-    }
-}
-
-impl Serialize for FixedString {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-        where
-            S: Serializer,
-    {
-        let mut buffer = [0u8; 56];
-        let bytes = self.value.as_bytes();
-        let length = bytes.len().min(55);
-        buffer[..length].copy_from_slice(&bytes[..length]);
-        serializer.serialize_bytes(&buffer)
-    }
-}
-
-struct FixedStringVisitor;
-
-impl<'de> Visitor<'de> for FixedStringVisitor {
-    type Value = FixedString;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a byte array of length 56")
-    }
-
-    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
-        where
-            E: de::Error,
-    {
-        let end = v.iter().position(|&b| b == 0).unwrap_or(v.len());
-        match std::str::from_utf8(&v[..end]) {
-            Ok(s) => Ok(FixedString::new(s.to_owned()).map_err(E::custom)?),
-            Err(err) => Err(E::custom(err.to_string())),
-        }
-    }
-}
-
-impl<'de> Deserialize<'de> for FixedString {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
-    {
-        deserializer.deserialize_bytes(FixedStringVisitor)
-    }
-}
+use crate::errors::FileError;
+use crate::{FileSystem, ROOT_BLK};
 
 impl FileSystem {
     pub fn read_dir_block(&self, entry: &DirEntry) -> Result<Block> {
@@ -106,8 +17,44 @@ impl FileSystem {
         let mut block = self.disk.read_block::<Block>(block_num as usize)?;
 
         block.parent_entry = entry.clone();
-        block.blk_num = block_num as u64;
+        block.blk_num = block_num;
+        block.path = self.curr_block.path.clone() + &entry.name.to_string() + "/";
 
         Ok(block)
+    }
+
+    pub fn change_dir(&mut self, path: &str) -> Result<()> {
+        let abs_path = path_handler::absolutize_from(path, &self.curr_block.path);
+        let (parent, name) = path_handler::split_path(abs_path.clone());
+
+        // there are two parts to this, one is to move to the parent of the directory,
+        // the second is
+        // to move to the directory or error if it does not exist or is a file
+        if parent == "/".to_string() {
+            let root_entry = DirEntry::new(fixed_str::FixedString::from("/"), crate::dir_entry::FileType::Directory, 0, ROOT_BLK as u16);
+            let root_block = self.read_dir_block(&root_entry)?;
+            self.curr_block = root_block;
+
+            if name.is_empty() {
+                return Ok(());
+            }
+
+            let entry = self.curr_block.get_entry(&name.clone().into());
+            match entry {
+                Some(entry) => {
+                    if entry.file_type != crate::dir_entry::FileType::Directory {
+                        return Err(FileError::NotADirectory(name.into()).into());
+                    }
+                    self.curr_block = self.read_dir_block(&entry)?;
+                },
+                None => {
+                    return Err(FileError::FileNotFound.into());
+                }
+            }
+
+            return Ok(());
+        }
+
+        Ok(())
     }
 }

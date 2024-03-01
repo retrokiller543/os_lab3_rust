@@ -1,9 +1,12 @@
 #[cfg(test)]
+mod path_tests;
+
+#[cfg(test)]
 mod tests {
     use rustic_disk::Disk;
     use crate::dir_entry::{DirEntry, FileType, Block};
     use crate::FileSystem;
-    use crate::utils::FixedString;
+    use crate::utils::fixed_str::FixedString;
 
     #[test]
     fn dir_entry_max_name_length_serialization_size() {

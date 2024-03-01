@@ -15,8 +15,9 @@ impl Format for FileSystem {
         let mut fat = FAT::new();
 
         let blk = Block {
+            path: "/".to_string(),
             parent_entry: DirEntry {
-                name: "root".into(),
+                name: "/".into(),
                 file_type: FileType::Directory,
                 ..Default::default()
             },
