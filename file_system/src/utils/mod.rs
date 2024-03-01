@@ -4,9 +4,9 @@ use anyhow::Result;
 
 use rustic_disk::traits::BlockStorage;
 
-use crate::{FileSystem, ROOT_BLK};
 use crate::dir_entry::{Block, DirEntry};
 use crate::errors::FileError;
+use crate::{FileSystem, ROOT_BLK};
 
 pub mod fixed_str;
 pub(crate) mod path_handler;
@@ -34,7 +34,12 @@ impl FileSystem {
         // the second is
         // to move to the directory or error if it does not exist or is a file
         if parent == "/".to_string() {
-            let root_entry = DirEntry::new(fixed_str::FixedString::from("/"), crate::dir_entry::FileType::Directory, 0, ROOT_BLK as u16);
+            let root_entry = DirEntry::new(
+                fixed_str::FixedString::from("/"),
+                crate::dir_entry::FileType::Directory,
+                0,
+                ROOT_BLK as u16,
+            );
             let root_block = self.read_dir_block(&root_entry)?;
             self.curr_block = root_block;
 
@@ -49,7 +54,7 @@ impl FileSystem {
                         return Err(FileError::NotADirectory(name.into()).into());
                     }
                     self.curr_block = self.read_dir_block(&entry)?;
-                },
+                }
                 None => {
                     return Err(FileError::FileNotFound.into());
                 }

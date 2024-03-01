@@ -4,10 +4,10 @@ use anyhow::Result;
 use path_absolutize::Absolutize;
 
 use crate::dir_entry::FileType;
-use crate::errors::{FileError, FSError};
-use crate::FileSystem;
+use crate::errors::{FSError, FileError};
 use crate::traits::{DirEntryHandling, File};
 use crate::utils::fixed_str::FixedString;
+use crate::FileSystem;
 
 impl FileSystem {
     pub fn remove_entry(&mut self, name: &str) -> Result<()> {
@@ -24,12 +24,16 @@ impl FileSystem {
             .to_str()
             .ok_or(FSError::PathError)?;
 
-        let entry = self.curr_block.get_entry(&name.into()).ok_or(FileError::FileNotFound)?.clone();
+        let entry = self
+            .curr_block
+            .get_entry(&name.into())
+            .ok_or(FileError::FileNotFound)?
+            .clone();
         match entry.file_type {
-            FileType::File => {
-                self.delete_file(&entry)?
-            },
-            FileType::Directory => { unimplemented!() }
+            FileType::File => self.delete_file(&entry)?,
+            FileType::Directory => {
+                unimplemented!()
+            }
         }
         Ok(())
     }
@@ -48,12 +52,22 @@ impl DirEntryHandling for FileSystem {
             .file_name()
             .unwrap()
             .to_str()
-            .ok_or(FSError::PathError)?.into();
+            .ok_or(FSError::PathError)?
+            .into();
 
         let dest_binding = Path::new(dest).absolutize()?;
         let dest_path = dest_binding.to_str().ok_or(FSError::PathError)?;
-        let dest_parent = Path::new(&dest_path).parent().unwrap().to_str().ok_or(FSError::PathError)?;
-        let dest_name: FixedString = Path::new(&dest_path).file_name().unwrap().to_str().ok_or(FSError::PathError)?.into();
+        let dest_parent = Path::new(&dest_path)
+            .parent()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?;
+        let dest_name: FixedString = Path::new(&dest_path)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?
+            .into();
 
         // NOTE: this will need to be updated to handle directories
 
@@ -84,12 +98,22 @@ impl DirEntryHandling for FileSystem {
             .file_name()
             .unwrap()
             .to_str()
-            .ok_or(FSError::PathError)?.into();
+            .ok_or(FSError::PathError)?
+            .into();
 
         let dest_binding = Path::new(dest).absolutize()?;
         let dest_path = dest_binding.to_str().ok_or(FSError::PathError)?;
-        let dest_parent = Path::new(&dest_path).parent().unwrap().to_str().ok_or(FSError::PathError)?;
-        let dest_name: FixedString = Path::new(&dest_path).file_name().unwrap().to_str().ok_or(FSError::PathError)?.into();
+        let dest_parent = Path::new(&dest_path)
+            .parent()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?;
+        let dest_name: FixedString = Path::new(&dest_path)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?
+            .into();
 
         // NOTE: this will need to be updated to handle directories
 

@@ -28,10 +28,11 @@ pub fn absolutize_from(path: &str, cwd: &str) -> String {
                 "." => has_change = true,
                 ".." => {
                     has_change = true;
-                    if !tokens.is_empty() && tokens.last() != Some(&"") { // Not to pop the root
+                    if !tokens.is_empty() && tokens.last() != Some(&"") {
+                        // Not to pop the root
                         tokens.pop();
                     }
-                },
+                }
                 _ => tokens.push(component),
             }
         }

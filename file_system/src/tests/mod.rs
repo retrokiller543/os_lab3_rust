@@ -6,8 +6,8 @@ mod tests {
     use rustic_disk::Disk;
 
     use crate::dir_entry::{Block, DirEntry, FileType};
-    use crate::FileSystem;
     use crate::utils::fixed_str::FixedString;
+    use crate::FileSystem;
 
     #[test]
     fn dir_entry_max_name_length_serialization_size() {
@@ -23,13 +23,18 @@ mod tests {
         println!("Serialized DirEntry size: {}", serialized.len());
 
         // Adjust the expected size according to your serialization results
-        assert!(serialized.len() <= Disk::BLOCK_SIZE, "DirEntry exceeds single block size");
+        assert!(
+            serialized.len() <= Disk::BLOCK_SIZE,
+            "DirEntry exceeds single block size"
+        );
     }
 
     #[test]
     fn block_max_entries_fit() {
         let max_entry = DirEntry::gen_max_size_entry();
-        let serialized_size = bincode::serialize(&max_entry).expect("Failed to serialize").len();
+        let serialized_size = bincode::serialize(&max_entry)
+            .expect("Failed to serialize")
+            .len();
         let entries_fit = Disk::BLOCK_SIZE / serialized_size; // Assuming no additional overhead for simplicity
 
         println!("Entries that fit in a block: {}", entries_fit);
@@ -50,15 +55,26 @@ mod tests {
         for _ in 0..FileSystem::num_entries() {
             block.add_entry(max_entry.clone()).unwrap();
             let new_size = block.get_size();
-            assert_eq!(new_size, size, "Block size should not change after removing entries");
+            assert_eq!(
+                new_size, size,
+                "Block size should not change after removing entries"
+            );
             size = new_size;
         }
 
-        if block.entries.iter().any(|entry| *entry == DirEntry::default()) {
+        if block
+            .entries
+            .iter()
+            .any(|entry| *entry == DirEntry::default())
+        {
             panic!("Block should be full");
         }
 
-        assert_eq!(block.entries.len(), FileSystem::num_entries(), "Block should be full");
+        assert_eq!(
+            block.entries.len(),
+            FileSystem::num_entries(),
+            "Block should be full"
+        );
     }
 
     #[test]
@@ -78,7 +94,10 @@ mod tests {
             };
             block.add_entry(entry).unwrap();
             let new_size = block.get_size();
-            assert_eq!(new_size, size, "Block size should not change after adding entries");
+            assert_eq!(
+                new_size, size,
+                "Block size should not change after adding entries"
+            );
             size = new_size;
         }
     }
@@ -93,9 +112,11 @@ mod tests {
         for _ in 0..FileSystem::num_entries() {
             block.remove_entry(&max_entry.name).unwrap();
             let new_size = block.get_size();
-            assert_eq!(new_size, size, "Block size should not change after removing entries");
+            assert_eq!(
+                new_size, size,
+                "Block size should not change after removing entries"
+            );
             size = new_size;
         }
     }
-
 }

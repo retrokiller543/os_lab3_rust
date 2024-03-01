@@ -1,8 +1,8 @@
 use std::fmt;
 use std::fmt::Display;
 
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Debug, Clone, PartialEq, thiserror::Error, Serialize, Deserialize)]
 enum NameError {
@@ -51,8 +51,8 @@ impl FixedString {
 
 impl Serialize for FixedString {
     fn serialize<S>(&self, serializer: S) -> anyhow::Result<S::Ok, S::Error>
-        where
-            S: Serializer,
+    where
+        S: Serializer,
     {
         let mut buffer = [0u8; 56];
         let bytes = self.value.as_bytes();
@@ -72,8 +72,8 @@ impl<'de> Visitor<'de> for FixedStringVisitor {
     }
 
     fn visit_bytes<E>(self, v: &[u8]) -> anyhow::Result<Self::Value, E>
-        where
-            E: de::Error,
+    where
+        E: de::Error,
     {
         let end = v.iter().position(|&b| b == 0).unwrap_or(v.len());
         match std::str::from_utf8(&v[..end]) {
@@ -85,8 +85,8 @@ impl<'de> Visitor<'de> for FixedStringVisitor {
 
 impl<'de> Deserialize<'de> for FixedString {
     fn deserialize<D>(deserializer: D) -> anyhow::Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         deserializer.deserialize_bytes(FixedStringVisitor)
     }

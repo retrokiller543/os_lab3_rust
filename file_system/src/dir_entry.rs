@@ -2,8 +2,8 @@ use anyhow::Result;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::errors::FileError;
-use crate::FileSystem;
 use crate::utils::fixed_str::FixedString;
+use crate::FileSystem;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Copy, Clone)]
 pub enum FileType {
@@ -43,7 +43,10 @@ impl DirEntry {
 
     pub fn gen_max_size_entry() -> DirEntry {
         DirEntry {
-            name: FixedString::new("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_string()).unwrap(),
+            name: FixedString::new(
+                "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".to_string(),
+            )
+            .unwrap(),
             file_type: FileType::File,
             size: u64::MAX,
             blk_num: u16::MAX,
@@ -83,7 +86,7 @@ impl Block {
             path: "".to_string(),
             parent_entry: DirEntry::gen_max_size_entry(),
             blk_num: u16::MAX,
-            entries: vec![DirEntry::gen_max_size_entry(); FileSystem::num_entries()]
+            entries: vec![DirEntry::gen_max_size_entry(); FileSystem::num_entries()],
         }
     }
 

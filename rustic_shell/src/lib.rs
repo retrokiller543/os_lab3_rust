@@ -211,12 +211,12 @@ impl Shell {
     function_handler! {list_dir}
     function_handler! {copy_entry, 0, 1}
     function_handler! {move_entry, 0, 1}
-    function_handler!{append_file, 0, 1}
-    function_handler!{create_dir, 0}
-    function_handler!{change_dir, 0}
+    function_handler! {append_file, 0, 1}
+    function_handler! {create_dir, 0}
+    function_handler! {change_dir, 0}
     //function_handler!{print_working_dir}
     //function_handler!{change_permissions, 0, 1}
-    function_handler!{remove_entry, 0}
+    function_handler! {remove_entry, 0}
 
     /// Displays help information for available commands.
     ///

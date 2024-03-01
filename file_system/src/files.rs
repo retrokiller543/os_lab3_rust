@@ -11,11 +11,11 @@ use path_absolutize::*;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::dir_entry::{DirEntry, FileType};
-use crate::errors::{FileError, FSError};
-use crate::FileSystem;
+use crate::errors::{FSError, FileError};
 use crate::traits::File;
 use crate::utils::fixed_str::FixedString;
 use crate::utils::path_handler::{absolutize_from, split_path};
+use crate::FileSystem;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub struct FileData {
@@ -89,7 +89,7 @@ impl File for FileSystem {
                 return Err(FileError::FileAlreadyExists.into());
             }
         }
-	
+
         // read data from user
         let mut data = String::new();
 
@@ -230,18 +230,34 @@ impl File for FileSystem {
             .file_name()
             .unwrap()
             .to_str()
-            .ok_or(FSError::PathError)?.into();
+            .ok_or(FSError::PathError)?
+            .into();
 
         let dest_binding = Path::new(dest).absolutize()?;
         let dest_path = dest_binding.to_str().ok_or(FSError::PathError)?;
-        let dest_parent = Path::new(&dest_path).parent().unwrap().to_str().ok_or(FSError::PathError)?;
-        let dest_name: FixedString = Path::new(&dest_path).file_name().unwrap().to_str().ok_or(FSError::PathError)?.into();
+        let dest_parent = Path::new(&dest_path)
+            .parent()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?;
+        let dest_name: FixedString = Path::new(&dest_path)
+            .file_name()
+            .unwrap()
+            .to_str()
+            .ok_or(FSError::PathError)?
+            .into();
 
         let new_data: FileData;
 
         {
-            let src_entry = self.curr_block.get_entry(&src_name).ok_or(FileError::FileNotFound)?;
-            let dest_entry = self.curr_block.get_entry(&dest_name).ok_or(FileError::FileNotFound)?;
+            let src_entry = self
+                .curr_block
+                .get_entry(&src_name)
+                .ok_or(FileError::FileNotFound)?;
+            let dest_entry = self
+                .curr_block
+                .get_entry(&dest_name)
+                .ok_or(FileError::FileNotFound)?;
 
             if src_entry.file_type != FileType::File || dest_entry.file_type != FileType::File {
                 return Err(FileError::FileIsDirectory.into());
@@ -256,7 +272,10 @@ impl File for FileSystem {
             self.write_data(&new_data, dest_entry.blk_num)?;
         }
 
-        let dest_entry = self.curr_block.get_entry_mut(&dest_name).ok_or(FileError::FileNotFound)?;
+        let dest_entry = self
+            .curr_block
+            .get_entry_mut(&dest_name)
+            .ok_or(FileError::FileNotFound)?;
 
         // update size of the dest entry
         dest_entry.size = new_data.len() as u64;

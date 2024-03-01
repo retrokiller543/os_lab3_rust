@@ -2,9 +2,9 @@ use anyhow::Result;
 
 use crate::dir_entry::{Block, DirEntry, FileType};
 use crate::errors::FileError;
-use crate::FileSystem;
 use crate::traits::Directory;
 use crate::utils::path_handler::{absolutize_from, split_path};
+use crate::FileSystem;
 
 impl Directory for FileSystem {
     fn create_dir(&mut self, path: &str) -> Result<()> {
@@ -24,9 +24,10 @@ impl Directory for FileSystem {
                 } else {
                     Err(FileError::FileExists(name.into()).into())
                 }
-            },
+            }
             None => {
-                let new_entry = DirEntry::new(name.into(), FileType::Directory, 0, self.get_free_block()?);
+                let new_entry =
+                    DirEntry::new(name.into(), FileType::Directory, 0, self.get_free_block()?);
                 let new_block = Block::new(new_entry.clone(), new_entry.blk_num.clone());
                 self.write_data::<Block>(&new_block, new_entry.blk_num)?;
                 self.curr_block.add_entry(new_entry)?;

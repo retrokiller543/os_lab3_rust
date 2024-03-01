@@ -1,5 +1,5 @@
 #[test]
-fn test_path()  {
+fn test_path() {
     use crate::utils::path_handler::*;
     let path = "/a/b/c";
     let cwd = "/a/b";
@@ -9,7 +9,7 @@ fn test_path()  {
 }
 
 #[test]
-fn test_path2()  {
+fn test_path2() {
     use crate::utils::path_handler::*;
     let path = "/a/b/../c";
     let cwd = "/a/b";

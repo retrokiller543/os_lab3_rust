@@ -8,8 +8,8 @@ use log::{debug, trace};
 use serde::Serialize;
 use serde_derive::Deserialize;
 
-use rustic_disk::Disk;
 use rustic_disk::traits::BlockStorage;
+use rustic_disk::Disk;
 
 use crate::dir_entry::{Block, DirEntry, FileType};
 use crate::errors::FSError;
@@ -20,11 +20,11 @@ mod directories;
 mod errors;
 mod files;
 mod format;
+mod other;
 pub mod prelude;
+mod tests;
 pub mod traits;
 mod utils;
-mod other;
-mod tests;
 
 const ROOT_BLK: u64 = 0;
 const FAT_BLK: u64 = 1;
@@ -123,10 +123,7 @@ impl FileSystem {
             // print size of DirEntry
             debug!("Max Size of DirEntry: {}", DirEntry::calculate_max_size());
             // print size of Block
-            debug!(
-                "Max Size of Block: {}",
-                Block::calculate_max_size()
-            );
+            debug!("Max Size of Block: {}", Block::calculate_max_size());
             // print size of FAT
             debug!("Size of FAT: {}", std::mem::size_of::<FAT>());
             // print size of FATType
