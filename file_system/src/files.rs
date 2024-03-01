@@ -244,7 +244,7 @@ impl File for FileSystem {
         let dest_parent = Path::new(&dest_path).parent().unwrap().to_str().ok_or(FSError::PathError)?;
         let dest_name: FixedString = Path::new(&dest_path).file_name().unwrap().to_str().ok_or(FSError::PathError)?.into();
 
-        let mut new_data: FileData;
+        let new_data: FileData;
 
         {
             let src_entry = self.curr_block.get_entry(&src_name).ok_or(FileError::FileNotFound)?;
