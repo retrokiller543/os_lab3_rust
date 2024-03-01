@@ -37,7 +37,7 @@ impl Disk {
     pub const NUM_BLOCKS: usize = 2048;
 
     /// The total size of the disk in bytes (calculated from BLOCK_SIZE and NUM_BLOCKS).
-    pub const DISK_SIZE: usize = Self::BLOCK_SIZE * Self::NUM_BLOCKS;
+    pub const DISK_SIZE: usize = Self::BLOCK_SIZE * Self::NUM_BLOCKS; // 8MB
 
     /// Creates a new Disk instance, initializing the disk file if it does not exist.
     ///

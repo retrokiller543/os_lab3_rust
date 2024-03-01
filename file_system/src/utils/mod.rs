@@ -5,6 +5,9 @@ use serde::de::{self, Visitor};
 use std::fmt;
 use std::fmt::Display;
 use anyhow::Result;
+use rustic_disk::traits::BlockStorage;
+use crate::dir_entry::{Block, DirEntry};
+use crate::FileSystem;
 
 #[derive(Debug, Clone, PartialEq, thiserror::Error, Serialize, Deserialize)]
 enum NameError {
@@ -91,5 +94,20 @@ impl<'de> Deserialize<'de> for FixedString {
             D: Deserializer<'de>,
     {
         deserializer.deserialize_bytes(FixedStringVisitor)
+    }
+}
+
+impl FileSystem {
+    pub fn read_dir_block(&self, entry: &DirEntry) -> Result<Block> {
+        if entry.file_type != crate::dir_entry::FileType::Directory {
+            return Err(crate::errors::FileError::NotADirectory(entry.clone().name).into());
+        }
+        let block_num = entry.blk_num;
+        let mut block = self.disk.read_block::<Block>(block_num as usize)?;
+
+        block.parent_entry = entry.clone();
+        block.blk_num = block_num as u64;
+
+        Ok(block)
     }
 }

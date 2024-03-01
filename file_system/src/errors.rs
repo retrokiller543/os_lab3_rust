@@ -1,4 +1,5 @@
 use thiserror::Error;
+use crate::utils::FixedString;
 
 #[derive(Error, Debug)]
 pub enum FSError {
@@ -24,4 +25,6 @@ pub enum FileError {
     FileIsDirectory,
     #[error("Filename is invalid: {0}")]
     InvalidFilename(String),
+    #[error("File is not a directory{0}")]
+    NotADirectory(FixedString),
 }
