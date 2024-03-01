@@ -33,7 +33,7 @@ impl FileSystem {
         // there are two parts to this, one is to move to the parent of the directory,
         // the second is
         // to move to the directory or error if it does not exist or is a file
-        if parent == "/".to_string() {
+        if parent == "/" {
             let root_entry = DirEntry::new(
                 fixed_str::FixedString::from("/"),
                 crate::dir_entry::FileType::Directory,
@@ -53,7 +53,7 @@ impl FileSystem {
                     if entry.file_type != crate::dir_entry::FileType::Directory {
                         return Err(FileError::NotADirectory(name.into()).into());
                     }
-                    self.curr_block = self.read_dir_block(&entry)?;
+                    self.curr_block = self.read_dir_block(entry)?;
                 }
                 None => {
                     return Err(FileError::FileNotFound.into());

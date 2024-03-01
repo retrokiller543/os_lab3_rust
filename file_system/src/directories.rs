@@ -28,7 +28,7 @@ impl Directory for FileSystem {
             None => {
                 let new_entry =
                     DirEntry::new(name.into(), FileType::Directory, 0, self.get_free_block()?);
-                let new_block = Block::new(new_entry.clone(), new_entry.blk_num.clone());
+                let new_block = Block::new(new_entry.clone(), new_entry.blk_num);
                 self.write_data::<Block>(&new_block, new_entry.blk_num)?;
                 self.curr_block.add_entry(new_entry)?;
                 self.write_curr_blk()?;
