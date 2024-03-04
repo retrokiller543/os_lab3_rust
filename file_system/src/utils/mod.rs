@@ -87,7 +87,7 @@ impl FileSystem {
                 new_block.path = path_buf.join(&name).to_str().unwrap().to_string();
 
                 self.curr_block = new_block;
-            },
+            }
             None => return Err(FileError::FileNotFound.into()),
         };
 
@@ -99,7 +99,10 @@ impl FileSystem {
         {
             trace!("traverse_dir({})", path)
         }
-        let names = path.split('/').filter(|&c| !c.is_empty()).collect::<Vec<&str>>();
+        let names = path
+            .split('/')
+            .filter(|&c| !c.is_empty())
+            .collect::<Vec<&str>>();
         #[cfg(feature = "debug")]
         {
             debug!("Traversing path: {:?}", names)

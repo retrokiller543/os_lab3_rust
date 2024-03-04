@@ -1,7 +1,7 @@
-use std::fmt;
-use std::fmt::Debug;
 use anyhow::Result;
 use serde_derive::{Deserialize, Serialize};
+use std::fmt;
+use std::fmt::Debug;
 
 use crate::errors::FileError;
 use crate::utils::fixed_str::FixedString;
@@ -70,7 +70,11 @@ pub struct Block {
 impl Debug for Block {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // get number of filled entries vs total entries
-        let filled = self.entries.iter().filter(|entry| !entry.name.is_empty()).count();
+        let filled = self
+            .entries
+            .iter()
+            .filter(|entry| !entry.name.is_empty())
+            .count();
         let total = self.entries.len();
 
         let filled_entries = self
