@@ -76,7 +76,7 @@ impl FileSystem {
 
         let parent_block = self.traverse_dir(parent)?;
 
-        let entry = match parent_block.get_entry(&name.clone().into()) {
+        match parent_block.get_entry(&name.clone().into()) {
             Some(entry) => {
                 if entry.file_type != crate::dir_entry::FileType::Directory {
                     return Err(FileError::NotADirectory(name.into()).into());
@@ -119,7 +119,7 @@ impl FileSystem {
 
                     let mut new_block = self.read_dir_block(entry)?;
                     let path_buf = std::path::PathBuf::from(&block.path);
-                    new_block.path = path_buf.join(&name).to_str().unwrap().to_string();
+                    new_block.path = path_buf.join(name).to_str().unwrap().to_string();
                     #[cfg(feature = "debug")]
                     {
                         debug!("New block: {:?}", new_block);
