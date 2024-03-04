@@ -6,9 +6,9 @@ use std::ops::{Index, IndexMut};
 use anyhow::Result;
 #[cfg(feature = "debug")]
 use log::{debug, trace};
+use logger_macro::trace_log;
 use serde::Serialize;
 use serde_derive::Deserialize;
-use logger_macro::trace_log;
 
 use rustic_disk::traits::BlockStorage;
 use rustic_disk::Disk;
@@ -57,15 +57,22 @@ impl Debug for FAT {
         // get number of EOF blocks
         let num_eof = self.0.iter().filter(|&x| *x == FatType::EOF).count();
         // get number of taken blocks
-        let num_taken = self.0.iter().filter(|&x| match x {
-            FatType::Taken(_) => true,
-            _ => false,
-        }).count();
+        let num_taken = self
+            .0
+            .iter()
+            .filter(|&x| match x {
+                FatType::Taken(_) => true,
+                _ => false,
+            })
+            .count();
         // get number of blocks
         let num_blocks = self.0.len();
-        write!(f, "FAT{{Free: {}, Taken: {}, EOF: {}, Total: {}}}", num_free, num_taken, num_eof, num_blocks)
+        write!(
+            f,
+            "FAT{{Free: {}, Taken: {}, EOF: {}, Total: {}}}",
+            num_free, num_taken, num_eof, num_blocks
+        )
     }
-
 }
 
 impl FAT {

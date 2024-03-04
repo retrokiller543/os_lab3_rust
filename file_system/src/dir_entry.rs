@@ -1,8 +1,8 @@
 use anyhow::Result;
+use logger_macro::trace_log;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Debug;
-use logger_macro::trace_log;
 
 use crate::errors::FileError;
 use crate::utils::fixed_str::FixedString;
@@ -128,7 +128,9 @@ impl Block {
     }
 
     pub fn get_entry_mut(&mut self, name: &FixedString) -> Option<&mut DirEntry> {
-        self.entries.iter_mut().find(move |entry| entry.name == *name)
+        self.entries
+            .iter_mut()
+            .find(move |entry| entry.name == *name)
     }
 
     #[trace_log]
@@ -153,5 +155,3 @@ impl Block {
         }
     }
 }
-
-

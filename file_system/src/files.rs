@@ -7,9 +7,9 @@ use std::path::Path;
 
 #[cfg(feature = "debug")]
 use log::{debug, trace};
+use logger_macro::trace_log;
 use path_absolutize::*;
 use serde_derive::{Deserialize, Serialize};
-use logger_macro::trace_log;
 
 use crate::dir_entry::{DirEntry, FileType};
 use crate::errors::{FSError, FileError};

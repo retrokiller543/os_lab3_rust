@@ -1,15 +1,21 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
 
-use syn::{parse_macro_input, DeriveInput, ItemFn, Pat, FnArg, Signature};
 use quote::{format_ident, quote};
+use syn::{parse_macro_input, DeriveInput, FnArg, ItemFn, Pat, Signature};
 
 #[proc_macro_attribute]
 pub fn trace_log(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input_fn = parse_macro_input!(item as ItemFn);
 
     // Extracting the generic parameters and where clause from the original function
-    let Signature { ident: fn_name, inputs, output, generics, .. } = input_fn.sig.clone();
+    let Signature {
+        ident: fn_name,
+        inputs,
+        output,
+        generics,
+        ..
+    } = input_fn.sig.clone();
     let vis = &input_fn.vis;
     let where_clause = &generics.where_clause;
     let attrs = input_fn.attrs;
@@ -34,7 +40,7 @@ pub fn trace_log(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 } else {
                     panic!("Unsupported argument pattern");
                 }
-            },
+            }
             FnArg::Receiver(recv) => {
                 let self_token = if recv.reference.is_some() {
                     if recv.mutability.is_some() {

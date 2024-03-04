@@ -34,5 +34,4 @@ pub enum FileError {
     DirectoryExists(FixedString),
     #[error("Invalid access mode: {0}")]
     InvalidAccessMode(String),
-
 }
