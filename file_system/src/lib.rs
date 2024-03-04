@@ -37,18 +37,36 @@ pub struct FileSystem {
     fat: FAT,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone, Copy)]
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
 pub enum FatType {
     Free,
     Taken(u16),
     EOF,
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct FAT(
     //#[serde(with = "BigArray")]
     Vec<FatType>,
 );
+
+impl Debug for FAT {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // get number of free blocks
+        let num_free = self.0.iter().filter(|&x| *x == FatType::Free).count();
+        // get number of EOF blocks
+        let num_eof = self.0.iter().filter(|&x| *x == FatType::EOF).count();
+        // get number of taken blocks
+        let num_taken = self.0.iter().filter(|&x| match x {
+            FatType::Taken(_) => true,
+            _ => false,
+        }).count();
+        // get number of blocks
+        let num_blocks = self.0.len();
+        write!(f, "FAT{{Free: {}, Taken: {}, EOF: {}, Total: {}}}", num_free, num_taken, num_eof, num_blocks)
+    }
+
+}
 
 impl FAT {
     #[trace_log]

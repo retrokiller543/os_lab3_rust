@@ -29,6 +29,51 @@ impl FileSystem {
         Ok(block)
     }
 
+    pub fn write_dir_block(&self, block: &Block) -> Result<()> {
+        self.disk.write_block(block.blk_num as usize, block)?;
+        Ok(())
+    }
+
+    pub fn update_dir(&mut self, block: &mut Block, path: String) -> Result<()> {
+        let abs_path = path_handler::absolutize_from(&path, "/");
+        let (parent, name) = path_handler::split_path(abs_path);
+        // iter over all parents and update their size and make sure that the new entry is added
+        let mut dirs = self.get_all_dirs(parent)?;
+        dirs.pop(); // remove the last one since we are going to update it
+        dirs.push(block.clone());
+        dbg!(&dirs, &block, &path);
+        let size_to_add = match block.get_entry(&name.clone().into()) {
+            Some(entry) => entry.size,
+            None => return Err(FileError::FileNotFound.into()),
+        };
+
+        let mut dirs_iter = dirs.iter_mut().peekable();
+        loop {
+            let dir = match dirs_iter.next() {
+                Some(dir) => dir,
+                None => break,
+            };
+            if let Some(next_dir) = dirs_iter.peek() {
+                match dir.get_entry_mut(&next_dir.parent_entry.name) {
+                    Some(entry) => {
+                        entry.size += size_to_add;
+                    }
+                    None => {
+                        return Err(FileError::FileNotFound.into());
+                    }
+                }
+            }
+
+            self.write_dir_block(dir)?;
+        }
+
+        // update working dir
+        let cwd = self.curr_block.path.clone();
+        self.curr_block = self.traverse_dir(cwd)?;
+
+        Ok(())
+    }
+
     #[trace_log]
     fn read_root_dir(&self) -> Result<Block> {
         let root_entry = DirEntry::new(
@@ -99,7 +144,7 @@ impl FileSystem {
     }
 
     #[trace_log]
-    fn traverse_dir(&self, path: String) -> Result<Block> {
+    pub(crate) fn traverse_dir(&self, path: String) -> Result<Block> {
         let names = path
             .split('/')
             .filter(|&c| !c.is_empty())
@@ -135,6 +180,47 @@ impl FileSystem {
         }
 
         Ok(block)
+    }
+
+    pub fn get_all_dirs(&self, path: String) -> Result<Vec<Block>> {
+        let names = path
+            .split('/')
+            .filter(|&c| !c.is_empty())
+            .collect::<Vec<&str>>();
+        #[cfg(feature = "debug")]
+        {
+            debug!("Traversing path: {:?}", names)
+        }
+        let mut block = self.read_root_dir()?; // start from root since fuck being efficent :)
+        let mut blocks = Vec::new();
+        blocks.push(block.clone());
+
+        for name in names {
+            let entry = block.get_entry(&name.into());
+            match entry {
+                Some(entry) => {
+                    if entry.file_type != crate::dir_entry::FileType::Directory {
+                        return Err(FileError::NotADirectory(name.into()).into());
+                    }
+
+                    let mut new_block = self.read_dir_block(entry)?;
+                    let path_buf = std::path::PathBuf::from(&block.path);
+                    new_block.path = path_buf.join(name).to_str().unwrap().to_string();
+                    #[cfg(feature = "debug")]
+                    {
+                        debug!("New block: {:?}", new_block);
+                    }
+                    blocks.push(new_block.clone());
+
+                    block = new_block;
+                }
+                None => {
+                    return Err(FileError::FileNotFound.into());
+                }
+            }
+        }
+
+        Ok(blocks)
     }
 
     #[trace_log]

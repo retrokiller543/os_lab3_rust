@@ -9,6 +9,7 @@ use std::path::Path;
 use log::{debug, trace};
 use path_absolutize::*;
 use serde_derive::{Deserialize, Serialize};
+use logger_macro::trace_log;
 
 use crate::dir_entry::{DirEntry, FileType};
 use crate::errors::{FSError, FileError};
@@ -65,6 +66,7 @@ impl Add for FileData {
 
 impl File for FileSystem {
     /// # Create a file in the current directory
+    //#[trace_log]
     fn create_file(&mut self, path: &str) -> anyhow::Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
@@ -84,8 +86,10 @@ impl File for FileSystem {
             return Err(FileError::InvalidFilename(name.to_string()).into());
         }
 
+        let mut parent_block = self.traverse_dir(parent)?;
+
         // make code to check if file exists and parent exists
-        for entry in self.curr_block.entries.iter() {
+        for entry in parent_block.entries.iter() {
             if entry.name == name.clone().into() {
                 return Err(FileError::FileAlreadyExists.into());
             }
@@ -138,18 +142,8 @@ impl File for FileSystem {
         }
 
         // update size of the parent block
-        self.curr_block.parent_entry.size += entry.size;
-
-        self.curr_block.add_entry(entry)?;
-
-        #[cfg(feature = "debug")]
-        {
-            trace!("Writing block to disk");
-            debug!("Block: {:?}", self.curr_block);
-            debug!("Block size on disk: {}", self.curr_block.get_size());
-        }
-
-        self.write_curr_blk()?;
+        parent_block.add_entry(entry)?;
+        self.update_dir(&mut parent_block, abs_path)?;
 
         Ok(())
     }
@@ -163,25 +157,17 @@ impl File for FileSystem {
     }
 
     /// the cat function
-    fn read_file(&self, name: &str) -> anyhow::Result<()> {
-        let binding = Path::new(name).absolutize()?;
-        let path = binding.to_str().ok_or(FSError::PathError)?;
-        let parent = Path::new(&path)
-            .parent()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?;
-        let name = Path::new(&path)
-            .file_name()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?;
+    fn read_file(&self, path: &str) -> anyhow::Result<()> {
+        let abs_path = absolutize_from(&path, &self.curr_block.path);
+        let (parent, name) = split_path(abs_path);
+
+        let parent_block = self.traverse_dir(parent.clone())?;
 
         #[cfg(feature = "debug")]
         {
-            debug!("Path: {}", path);
-            debug!("Parent: {}", parent);
-            debug!("Name: {}", name);
+            debug!("Path: {}", &path);
+            debug!("Parent: {}", &parent);
+            debug!("Name: {}", &name);
         }
 
         if name.is_empty() {
@@ -190,8 +176,8 @@ impl File for FileSystem {
 
         let mut file_entry: &DirEntry = &DirEntry::default();
 
-        for entry in self.curr_block.entries.iter() {
-            if entry.name == name.into() {
+        for entry in parent_block.entries.iter() {
+            if entry.name == name.clone().into() {
                 file_entry = entry;
             }
         }
@@ -221,44 +207,23 @@ impl File for FileSystem {
 
     /// The append function
     fn append_file(&mut self, source: &str, dest: &str) -> anyhow::Result<()> {
-        let src_binding = Path::new(source).absolutize()?;
-        let src_path = src_binding.to_str().ok_or(FSError::PathError)?;
-        let src_parent = Path::new(&src_path)
-            .parent()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?;
-        let src_name: FixedString = Path::new(&src_path)
-            .file_name()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?
-            .into();
+        let abs_src = absolutize_from(source, &self.curr_block.path);
+        let abs_dest = absolutize_from(dest, &self.curr_block.path);
 
-        let dest_binding = Path::new(dest).absolutize()?;
-        let dest_path = dest_binding.to_str().ok_or(FSError::PathError)?;
-        let dest_parent = Path::new(&dest_path)
-            .parent()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?;
-        let dest_name: FixedString = Path::new(&dest_path)
-            .file_name()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?
-            .into();
+        let (src_parent, src_name) = split_path(abs_src);
+        let (dest_parent, dest_name) = split_path(abs_dest.clone());
+
+        let src_block = self.traverse_dir(src_parent)?;
+        let mut dest_block = self.traverse_dir(dest_parent)?;
 
         let new_data: FileData;
 
         {
-            let src_entry = self
-                .curr_block
-                .get_entry(&src_name)
+            let src_entry = src_block
+                .get_entry(&src_name.into())
                 .ok_or(FileError::FileNotFound)?;
-            let dest_entry = self
-                .curr_block
-                .get_entry(&dest_name)
+            let dest_entry = dest_block
+                .get_entry(&dest_name.clone().into())
                 .ok_or(FileError::FileNotFound)?;
 
             if src_entry.file_type != FileType::File || dest_entry.file_type != FileType::File {
@@ -274,15 +239,14 @@ impl File for FileSystem {
             self.write_data(&new_data, dest_entry.blk_num)?;
         }
 
-        let dest_entry = self
-            .curr_block
-            .get_entry_mut(&dest_name)
+        let dest_entry = dest_block
+            .get_entry_mut(&dest_name.clone().into())
             .ok_or(FileError::FileNotFound)?;
 
         // update size of the dest entry
         dest_entry.size = new_data.len() as u64;
 
-        self.write_curr_blk()?;
+        self.update_dir(&mut dest_block, abs_dest)?;
 
         Ok(())
     }

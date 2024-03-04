@@ -1,3 +1,4 @@
 /target
 diskfile.bin
 *.log
+*.exe
