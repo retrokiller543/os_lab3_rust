@@ -1,6 +1,6 @@
 #![allow(unused_variables)]
 
-use std::io;
+use std::fmt::Debug;
 use std::io::BufRead;
 
 #[cfg(feature = "debug")]
@@ -12,13 +12,41 @@ use crate::dir_entry::{DirEntry, FileType};
 use crate::errors::FileError;
 use crate::file_data::FileData;
 use crate::FileSystem;
+use crate::prelude::Input;
+use crate::tests::MockInput;
 use crate::traits::File;
 use crate::utils::path_handler::{absolutize_from, split_path};
 
+pub struct StdinInput;
+
+impl Debug for StdinInput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "StdinInput")
+    }
+}
+
+impl Input for StdinInput {
+    fn read_lines(&self) -> String {
+        let mut data = String::new();
+        let stdin = std::io::stdin();
+        for line in stdin.lock().lines() {
+            let input_data = line.expect("Failed to read line");
+            if input_data.is_empty() {
+                break;
+            }
+            data.push_str(&input_data);
+            data.push('\n');
+        }
+        data.pop(); // Remove the last newline character if it exists
+        data
+    }
+}
+
 impl File for FileSystem {
     /// # Create a file in the current directory
+    ///
     #[trace_log]
-    fn create_file(&mut self, path: &str) -> anyhow::Result<()> {
+    fn create_file<T: Input + Debug>(&mut self, path: &str, input_source: &T) -> anyhow::Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
 
@@ -47,18 +75,7 @@ impl File for FileSystem {
         }
 
         // read data from user
-        let mut data = String::new();
-
-        let stdin = io::stdin();
-        for line in stdin.lock().lines() {
-            let input_data = line.expect("Failed to read line");
-            if input_data.is_empty() {
-                break;
-            }
-            data.push_str(&input_data);
-            data.push('\n'); // Add a newline character after each line
-        }
-        data.pop(); // Remove the last newline character
+        let data = input_source.read_lines();
 
         #[cfg(feature = "debug")]
         {
@@ -96,6 +113,18 @@ impl File for FileSystem {
         parent_block.add_entry(entry)?;
         self.update_dir(&mut parent_block, abs_path)?;
 
+        Ok(())
+    }
+
+    fn create_file_with_content(&mut self, path: &str, content: &str) -> anyhow::Result<()> {
+        let data = MockInput::new(content);
+        self.create_file(path, &data)?;
+        Ok(())
+    }
+
+    fn create_file_stdio(&mut self, name: &str) -> anyhow::Result<()> {
+        let data = StdinInput;
+        self.create_file(name, &data)?;
         Ok(())
     }
 

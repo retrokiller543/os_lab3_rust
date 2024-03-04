@@ -191,7 +191,7 @@ impl Shell {
     fn execute_command(&mut self, cmd: &str, args: &[&str]) -> Result<()> {
         command_handler! {self, cmd, args, {
             "format" => format(0), // No arguments expected for format
-            "create" => create_file(1), // Expects exactly 1 argument
+            "create" => create_file_stdio(1), // Expects exactly 1 argument
             "cat" => read_file(1), // Expects exactly 1 argument
             "ls" => list_dir(0), // No arguments expected for ls
             "cp" => copy_entry(2), // Expects exactly 2 arguments
@@ -206,7 +206,7 @@ impl Shell {
     }
 
     function_handler! {format}
-    function_handler! {create_file, 0}
+    function_handler! {create_file_stdio, 0}
     function_handler! {read_file, 0}
     function_handler! {list_dir}
     function_handler! {copy_entry, 0, 1}
