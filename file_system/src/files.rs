@@ -1,19 +1,21 @@
 #![allow(unused_variables)]
 
-#[cfg(feature = "debug")]
-use log::{debug, trace};
-use logger_macro::trace_log;
-use serde_derive::{Deserialize, Serialize};
 use std::io;
 use std::io::BufRead;
 use std::ops::Add;
 
+#[cfg(feature = "debug")]
+use log::{debug, trace};
+use serde_derive::{Deserialize, Serialize};
+
+use logger_macro::trace_log;
+
 use crate::dir_entry::{DirEntry, FileType};
 use crate::errors::FileError;
 use crate::file_data::FileData;
+use crate::FileSystem;
 use crate::traits::File;
 use crate::utils::path_handler::{absolutize_from, split_path};
-use crate::FileSystem;
 
 impl File for FileSystem {
     /// # Create a file in the current directory

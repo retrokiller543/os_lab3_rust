@@ -1,16 +1,18 @@
 // Helper functions and structs
 
+use std::path::Path;
+
 use anyhow::Result;
 #[cfg(feature = "debug")]
 use log::debug;
 use path_absolutize::Absolutize;
+
 use rustic_disk::traits::BlockStorage;
-use std::path::Path;
 
 use crate::dir_entry::FileType;
-use crate::errors::{FSError, FileError};
-use crate::prelude::File;
+use crate::errors::{FileError, FSError};
 use crate::FileSystem;
+use crate::prelude::File;
 
 pub mod dirs;
 pub mod fixed_str;

@@ -1,12 +1,14 @@
-use anyhow::Result;
-use logger_macro::trace_log;
-use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Debug;
 
+use anyhow::Result;
+use serde_derive::{Deserialize, Serialize};
+
+use logger_macro::trace_log;
+
 use crate::errors::FileError;
-use crate::utils::fixed_str::FixedString;
 use crate::FileSystem;
+use crate::utils::fixed_str::FixedString;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Copy, Clone)]
 pub enum FileType {

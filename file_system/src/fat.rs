@@ -1,8 +1,10 @@
-use logger_macro::trace_log;
-use rustic_disk::Disk;
-use serde_derive::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
+
+use serde_derive::{Deserialize, Serialize};
+
+use logger_macro::trace_log;
+use rustic_disk::Disk;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
 pub enum FatType {

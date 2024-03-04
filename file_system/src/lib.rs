@@ -5,16 +5,16 @@ use std::fmt::Debug;
 use anyhow::Result;
 #[cfg(feature = "debug")]
 use log::{debug, trace};
-use logger_macro::trace_log;
 use serde::Serialize;
 
-use rustic_disk::traits::BlockStorage;
+use file_data::FileData;
+use logger_macro::trace_log;
 use rustic_disk::Disk;
+use rustic_disk::traits::BlockStorage;
 
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::FSError;
-use crate::fat::{FatType, FAT};
-use file_data::FileData;
+use crate::fat::{FAT, FatType};
 
 mod dir_entry;
 mod directories;
