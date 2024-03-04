@@ -9,12 +9,12 @@ use serde::Serialize;
 
 use file_data::FileData;
 use logger_macro::trace_log;
-use rustic_disk::Disk;
 use rustic_disk::traits::BlockStorage;
+use rustic_disk::Disk;
 
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::FSError;
-use crate::fat::{FAT, FatType};
+use crate::fat::{FatType, FAT};
 
 mod dir_entry;
 mod directories;

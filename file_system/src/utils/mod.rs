@@ -8,9 +8,9 @@ use log::debug;
 use path_absolutize::Absolutize;
 
 use crate::dir_entry::FileType;
-use crate::errors::{FileError, FSError};
-use crate::FileSystem;
+use crate::errors::{FSError, FileError};
 use crate::prelude::File;
+use crate::FileSystem;
 
 pub mod dirs;
 pub mod fixed_str;

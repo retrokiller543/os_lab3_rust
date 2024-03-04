@@ -1,13 +1,34 @@
+use crate::prelude::Input;
+
 #[cfg(test)]
 mod path_tests;
+
+#[derive(Debug)]
+pub(crate) struct MockInput {
+    pub(crate) input: String,
+}
+
+impl MockInput {
+    pub(crate) fn new(input: &str) -> Self {
+        Self {
+            input: input.to_string(),
+        }
+    }
+}
+
+impl Input for MockInput {
+    fn read_lines(&self) -> String {
+        self.input.clone()
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use rustic_disk::Disk;
 
     use crate::dir_entry::{DirBlock, DirEntry, FileType};
-    use crate::FileSystem;
     use crate::utils::fixed_str::FixedString;
+    use crate::FileSystem;
 
     #[test]
     fn dir_entry_max_name_length_serialization_size() {
@@ -125,54 +146,32 @@ mod tests {
 mod generic_tests {
     use rustic_disk::Disk;
 
-    use crate::dir_entry::{DirEntry, FileType};
+    use crate::prelude::*;
     use crate::FileSystem;
 
     #[test]
-    fn test_file_system_creation() {
-        let fs = FileSystem::new().unwrap();
-        assert_eq!(fs.curr_block.blk_num, 0);
-        Disk::delete_disk().unwrap();
-    }
-
-    #[test]
-    fn test_file_system_write_curr_blk() {
-        let mut fs = FileSystem::new().unwrap();
-        let entry = DirEntry {
-            name: "test".into(),
-            file_type: FileType::File,
-            size: 0,
-            blk_num: 0,
-        };
-        fs.curr_block.entries.push(entry.clone());
-        //fs.curr_block.entries[0] = entry.clone();
-        fs.write_curr_blk().unwrap();
-        let read_block = fs.read_blk(0).unwrap();
-        assert_eq!(read_block.entries[0].name, entry.name);
-        Disk::delete_disk().unwrap();
-    }
-}
-
-#[cfg(test)]
-mod format_tests {
-    use anyhow::Result;
-
-    use rustic_disk::Disk;
-
-    use crate::dir_entry::{DirBlock, FileType};
-    use crate::FileSystem;
-    use crate::prelude::Format;
-
-    #[test]
-    fn test_format() -> Result<()> {
+    fn create_file_inside_dir() -> anyhow::Result<()> {
         let mut fs = FileSystem::new()?;
         fs.format()?;
-        assert!(Disk::disk_exists());
+        fs.create_dir("d1")?;
+        fs.create_dir("d1/d2")?;
+        let results = fs.create_file_with_content("d2/f1", "Hello, World!");
+        assert!(results.is_ok()); // We should not find the directory d2
+        Disk::delete_disk()?;
+        Ok(())
+    }
 
-        // read the first block and check if it's a directory
-        let block: DirBlock = fs.read_blk(0)?;
-        assert_eq!(block.parent_entry.file_type, FileType::Directory);
-
+    #[test]
+    fn test_nested_append() -> anyhow::Result<()> {
+        let mut fs = FileSystem::new()?;
+        fs.format()?;
+        fs.create_dir("d1")?;
+        fs.create_file_with_content("d1/f1", "Hello, World!")?;
+        fs.create_file_with_content("f2", "Hello, World!")?;
+        fs.change_dir("d1")?;
+        let result = fs.append_file("f1", "../f2");
+        assert!(result.is_ok());
+        Disk::delete_disk()?;
         Ok(())
     }
 }

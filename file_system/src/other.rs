@@ -3,10 +3,10 @@ use std::path::Path;
 use anyhow::Result;
 use path_absolutize::Absolutize;
 
-use crate::errors::{FileError, FSError};
-use crate::FileSystem;
+use crate::errors::{FSError, FileError};
 use crate::traits::DirEntryHandling;
 use crate::utils::fixed_str::FixedString;
+use crate::FileSystem;
 
 impl DirEntryHandling for FileSystem {
     /// The move function is used to move a file from one directory to another
