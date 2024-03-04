@@ -1,9 +1,10 @@
 use anyhow::Result;
-use crate::dir_entry::{Block, DirEntry, FileType};
-use crate::errors::{FileError};
+
+use crate::dir_entry::{DirBlock, DirEntry, FileType};
+use crate::errors::FileError;
+use crate::FileSystem;
 use crate::traits::Directory;
 use crate::utils::path_handler::{absolutize_from, split_path};
-use crate::FileSystem;
 
 impl Directory for FileSystem {
     /// Creates a directory in the current directory
@@ -28,8 +29,8 @@ impl Directory for FileSystem {
             None => {
                 let new_entry =
                     DirEntry::new(name.into(), FileType::Directory, 0, self.get_free_block()?);
-                let new_block = Block::new(new_entry.clone(), new_entry.blk_num);
-                self.write_data::<Block>(&new_block, new_entry.blk_num)?;
+                let new_block = DirBlock::new(new_entry.clone(), new_entry.blk_num);
+                self.write_data::<DirBlock>(&new_block, new_entry.blk_num)?;
                 self.curr_block.add_entry(new_entry)?;
                 self.write_curr_blk()?;
             }

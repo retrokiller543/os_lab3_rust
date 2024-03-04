@@ -1,0 +1,49 @@
+use std::ops::Add;
+
+use serde_derive::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct FileData {
+    pub(crate) data: Vec<u8>,
+}
+
+impl FileData {
+    pub fn new(data: Vec<u8>) -> Self {
+        FileData { data }
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+
+    pub fn get_size(&self) -> usize {
+        let serialized = bincode::serialize(&self).unwrap();
+        serialized.len()
+    }
+}
+
+impl From<&str> for FileData {
+    fn from(data: &str) -> Self {
+        FileData {
+            data: data.as_bytes().to_vec(),
+        }
+    }
+}
+
+impl From<String> for FileData {
+    fn from(data: String) -> Self {
+        FileData {
+            data: data.as_bytes().to_vec(),
+        }
+    }
+}
+
+impl Add for FileData {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let mut data = self.data;
+        data.extend(other.data);
+        FileData { data }
+    }
+}
