@@ -127,9 +127,8 @@ impl Block {
         self.entries.iter().find(|entry| entry.name == *name)
     }
 
-    #[trace_log]
     pub fn get_entry_mut(&mut self, name: &FixedString) -> Option<&mut DirEntry> {
-        self.entries.iter_mut().find(|entry| entry.name == *name)
+        self.entries.iter_mut().find(move |entry| entry.name == *name)
     }
 
     #[trace_log]
@@ -154,3 +153,5 @@ impl Block {
         }
     }
 }
+
+
