@@ -1,7 +1,8 @@
 // Helper functions and structs
 
 use anyhow::Result;
-use log::{debug, trace};
+#[cfg(feature = "debug")]
+use log::{debug};
 use logger_macro::trace_log;
 
 use rustic_disk::traits::BlockStorage;
@@ -41,18 +42,13 @@ impl FileSystem {
         let mut dirs = self.get_all_dirs(parent)?;
         dirs.pop(); // remove the last one since we are going to update it
         dirs.push(block.clone());
-        dbg!(&dirs, &block, &path);
         let size_to_add = match block.get_entry(&name.clone().into()) {
             Some(entry) => entry.size,
             None => return Err(FileError::FileNotFound.into()),
         };
 
         let mut dirs_iter = dirs.iter_mut().peekable();
-        loop {
-            let dir = match dirs_iter.next() {
-                Some(dir) => dir,
-                None => break,
-            };
+        while let Some(dir) = dirs_iter.next() {
             if let Some(next_dir) = dirs_iter.peek() {
                 match dir.get_entry_mut(&next_dir.parent_entry.name) {
                     Some(entry) => {

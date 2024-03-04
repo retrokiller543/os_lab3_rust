@@ -1,8 +1,6 @@
 use anyhow::Result;
-use std::path::Path;
-
 use crate::dir_entry::{Block, DirEntry, FileType};
-use crate::errors::{FSError, FileError};
+use crate::errors::{FileError};
 use crate::traits::Directory;
 use crate::utils::path_handler::{absolutize_from, split_path};
 use crate::FileSystem;

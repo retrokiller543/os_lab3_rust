@@ -60,10 +60,7 @@ impl Debug for FAT {
         let num_taken = self
             .0
             .iter()
-            .filter(|&x| match x {
-                FatType::Taken(_) => true,
-                _ => false,
-            })
+            .filter(|&x| matches!(x, FatType::Taken(_)))
             .count();
         // get number of blocks
         let num_blocks = self.0.len();

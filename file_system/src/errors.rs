@@ -32,6 +32,4 @@ pub enum FileError {
     FileExists(FixedString),
     #[error("Directory already exists with name: {0}")]
     DirectoryExists(FixedString),
-    #[error("Invalid access mode: {0}")]
-    InvalidAccessMode(String),
 }

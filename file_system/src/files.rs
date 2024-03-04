@@ -3,18 +3,14 @@
 use std::io;
 use std::io::BufRead;
 use std::ops::Add;
-use std::path::Path;
-
 #[cfg(feature = "debug")]
 use log::{debug, trace};
 use logger_macro::trace_log;
-use path_absolutize::*;
 use serde_derive::{Deserialize, Serialize};
 
 use crate::dir_entry::{DirEntry, FileType};
-use crate::errors::{FSError, FileError};
+use crate::errors::{FileError};
 use crate::traits::File;
-use crate::utils::fixed_str::FixedString;
 use crate::utils::path_handler::{absolutize_from, split_path};
 use crate::FileSystem;
 
@@ -66,7 +62,7 @@ impl Add for FileData {
 
 impl File for FileSystem {
     /// # Create a file in the current directory
-    //#[trace_log]
+    #[trace_log]
     fn create_file(&mut self, path: &str) -> anyhow::Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
@@ -148,6 +144,7 @@ impl File for FileSystem {
         Ok(())
     }
 
+    #[trace_log]
     fn delete_file(&mut self, entry: &DirEntry) -> anyhow::Result<()> {
         self.clear_file_data(entry.blk_num)?;
         self.curr_block.remove_entry(&entry.name)?;
@@ -157,8 +154,9 @@ impl File for FileSystem {
     }
 
     /// the cat function
+    #[trace_log]
     fn read_file(&self, path: &str) -> anyhow::Result<()> {
-        let abs_path = absolutize_from(&path, &self.curr_block.path);
+        let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path);
 
         let parent_block = self.traverse_dir(parent.clone())?;
@@ -206,6 +204,7 @@ impl File for FileSystem {
     }
 
     /// The append function
+    #[trace_log]
     fn append_file(&mut self, source: &str, dest: &str) -> anyhow::Result<()> {
         let abs_src = absolutize_from(source, &self.curr_block.path);
         let abs_dest = absolutize_from(dest, &self.curr_block.path);
