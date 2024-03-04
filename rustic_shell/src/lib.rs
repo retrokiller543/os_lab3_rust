@@ -199,7 +199,7 @@ impl Shell {
             "append" => append_file(2), // Expects exactly 2 arguments
             "mkdir" => create_dir(1), // Expects exactly 1 argument
             "cd" => change_dir(1), // Expects exactly 1 argument
-            //"pwd" => print_working_dir(0), // No arguments expected for pwd
+            "pwd" => print_working_dir(0), // No arguments expected for pwd
             //"chmod" => change_permissions(2), // Expects exactly 2 arguments
             "rm" => remove_entry(1), // Expects exactly 1 argument
         }}
@@ -214,7 +214,7 @@ impl Shell {
     function_handler! {append_file, 0, 1}
     function_handler! {create_dir, 0}
     function_handler! {change_dir, 0}
-    //function_handler!{print_working_dir}
+    function_handler!{print_working_dir}
     //function_handler!{change_permissions, 0, 1}
     function_handler! {remove_entry, 0}
 

@@ -1,3 +1,5 @@
+use std::fmt;
+use std::fmt::Debug;
 use anyhow::Result;
 use serde_derive::{Deserialize, Serialize};
 
@@ -54,7 +56,7 @@ impl DirEntry {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, PartialEq, Clone)]
+#[derive(Default, Serialize, Deserialize, PartialEq, Clone)]
 pub struct Block {
     #[serde(skip_deserializing, skip_serializing)]
     pub(crate) path: String,
@@ -63,6 +65,25 @@ pub struct Block {
     #[serde(skip_deserializing, skip_serializing)]
     pub(crate) blk_num: u16,
     pub(crate) entries: Vec<DirEntry>,
+}
+
+impl Debug for Block {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // get number of filled entries vs total entries
+        let filled = self.entries.iter().filter(|entry| !entry.name.is_empty()).count();
+        let total = self.entries.len();
+
+        let filled_entries = self
+            .entries
+            .iter()
+            .filter(|entry| !entry.name.is_empty())
+            .collect::<Vec<_>>();
+        write!(
+            f,
+            "Block {{ path: {}, parent_entry: {:?}, blk_num: {}, entries: {:?}, filled: {}/{} }}",
+            self.path, self.parent_entry, self.blk_num, filled_entries, filled, total
+        )
+    }
 }
 
 impl Block {
