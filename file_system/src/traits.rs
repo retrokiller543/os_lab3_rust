@@ -1,5 +1,5 @@
-use std::fmt::Debug;
 use anyhow::Result;
+use std::fmt::Debug;
 
 use crate::dir_entry::DirEntry;
 

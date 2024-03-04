@@ -1,8 +1,8 @@
 use std::fmt;
 use std::fmt::Display;
 
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Debug, Clone, PartialEq, thiserror::Error, Serialize, Deserialize)]
 enum NameError {

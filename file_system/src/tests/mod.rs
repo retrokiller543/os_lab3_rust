@@ -27,8 +27,8 @@ mod tests {
     use rustic_disk::Disk;
 
     use crate::dir_entry::{DirBlock, DirEntry, FileType};
-    use crate::FileSystem;
     use crate::utils::fixed_str::FixedString;
+    use crate::FileSystem;
 
     #[test]
     fn dir_entry_max_name_length_serialization_size() {
@@ -146,8 +146,8 @@ mod tests {
 mod generic_tests {
     use rustic_disk::Disk;
 
-    use crate::FileSystem;
     use crate::prelude::*;
+    use crate::FileSystem;
 
     #[test]
     fn create_file_inside_dir() -> anyhow::Result<()> {

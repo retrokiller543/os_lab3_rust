@@ -11,11 +11,11 @@ use logger_macro::trace_log;
 use crate::dir_entry::{DirEntry, FileType};
 use crate::errors::FileError;
 use crate::file_data::FileData;
-use crate::FileSystem;
 use crate::prelude::Input;
 use crate::tests::MockInput;
 use crate::traits::File;
 use crate::utils::path_handler::{absolutize_from, split_path};
+use crate::FileSystem;
 
 pub struct StdinInput;
 
@@ -46,7 +46,11 @@ impl File for FileSystem {
     /// # Create a file in the current directory
     ///
     #[trace_log]
-    fn create_file<T: Input + Debug>(&mut self, path: &str, input_source: &T) -> anyhow::Result<()> {
+    fn create_file<T: Input + Debug>(
+        &mut self,
+        path: &str,
+        input_source: &T,
+    ) -> anyhow::Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
 

@@ -7,8 +7,8 @@ use serde_derive::{Deserialize, Serialize};
 use logger_macro::trace_log;
 
 use crate::errors::FileError;
-use crate::FileSystem;
 use crate::utils::fixed_str::FixedString;
+use crate::FileSystem;
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Copy, Clone)]
 pub enum FileType {
