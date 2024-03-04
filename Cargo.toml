@@ -1,4 +1,4 @@
-workspace = { members = ["rustic_disk", "file_system", "rustic_shell"] }
+workspace = { members = ["rustic_disk", "file_system", "rustic_shell", "logger_macro"] }
 [package]
 name = "os_lab3"
 version = "0.1.0"

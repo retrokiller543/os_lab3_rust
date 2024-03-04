@@ -1,5 +1,6 @@
 #![allow(unused_variables)]
 
+use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
 
 use anyhow::Result;
@@ -7,6 +8,7 @@ use anyhow::Result;
 use log::{debug, trace};
 use serde::Serialize;
 use serde_derive::Deserialize;
+use logger_macro::trace_log;
 
 use rustic_disk::traits::BlockStorage;
 use rustic_disk::Disk;
@@ -49,6 +51,7 @@ pub struct FAT(
 );
 
 impl FAT {
+    #[trace_log]
     pub fn new() -> Self {
         let mut fat = vec![FatType::Free; (Disk::BLOCK_SIZE >> 2) - 8]; // 8 bytes is from padding in FAT struct
         fat.fill(FatType::Free);
@@ -56,6 +59,7 @@ impl FAT {
     }
 
     // Create an iterator
+    #[trace_log]
     pub fn iter(&self) -> FatIterator {
         FatIterator {
             fat: self,
@@ -63,6 +67,7 @@ impl FAT {
         }
     }
 
+    #[trace_log]
     pub fn get(&self, index: usize) -> Option<&FatType> {
         self.0.get(index)
     }
@@ -114,30 +119,8 @@ impl FileSystem {
         Disk::BLOCK_SIZE / DirEntry::calculate_max_size()
     }
 
+    #[trace_log]
     pub fn new() -> Result<Self> {
-        #[cfg(feature = "debug")]
-        {
-            trace!("Creating new file system...");
-            debug!("Size of Disk: {}", std::mem::size_of::<Disk>());
-            debug!("Max number of entries: {}", Self::num_entries());
-            // print size of DirEntry
-            debug!("Max Size of DirEntry: {}", DirEntry::calculate_max_size());
-            // print size of Block
-            debug!("Max Size of Block: {}", Block::calculate_max_size());
-            // print size of FAT
-            debug!("Size of FAT: {}", std::mem::size_of::<FAT>());
-            // print size of FATType
-            debug!("Size of FATType: {}", std::mem::size_of::<FatType>());
-            // the expected size of an empty dir block
-            let mut empty_block = Block::default();
-            empty_block.entries = vec![DirEntry::default(); Self::num_entries()];
-            debug!("Size of empty DirBlock: {}", empty_block.get_size());
-            // the max size of a dir block
-            let mut max_block = Block::default();
-            max_block.entries = vec![DirEntry::gen_max_size_entry(); Self::num_entries()];
-            debug!("Size of max DirBlock: {}", max_block.get_size());
-        }
-
         let (curr_block, fat, disk) = if !Disk::disk_exists() {
             let disk = Disk::new()?;
             let fat = FAT::new();
@@ -174,6 +157,7 @@ impl FileSystem {
         })
     }
 
+    #[trace_log]
     pub fn write_curr_blk(&self) -> Result<()> {
         let block_to_write = self.curr_block.blk_num;
         self.disk
@@ -181,6 +165,7 @@ impl FileSystem {
         Ok(())
     }
 
+    #[trace_log]
     pub fn get_free_block(&self) -> Result<u16> {
         let mut blk = 0;
 
@@ -201,7 +186,8 @@ impl FileSystem {
         Ok(blk)
     }
 
-    pub fn write_data<T: Serialize>(&mut self, data: &T, start_blk: u16) -> Result<()> {
+    #[trace_log]
+    pub fn write_data<T: Serialize + Debug>(&mut self, data: &T, start_blk: u16) -> Result<()> {
         // Serialize the data
         let serialized_data = bincode::serialize(data).map_err(FSError::SerializationError)?;
 
@@ -239,6 +225,7 @@ impl FileSystem {
         Ok(())
     }
 
+    #[trace_log]
     pub fn update_fat(&mut self, blk: u16, next_blk: Option<u16>) -> Result<()> {
         match next_blk {
             Some(next_blk) => {
@@ -253,6 +240,7 @@ impl FileSystem {
     }
 
     // Method to read all blocks of a file in order following the FAT table
+    #[trace_log]
     pub fn read_file_data(&self, start_blk: u16) -> Result<FileData> {
         let mut data = FileData::default();
         let mut blk_num = start_blk;
@@ -283,6 +271,7 @@ impl FileSystem {
         Ok(data)
     }
 
+    #[trace_log]
     pub fn clear_file_data(&self, start_blk: u16) -> Result<()> {
         let mut blk_num = start_blk;
         let zero_data = vec![0u8; Disk::BLOCK_SIZE];
@@ -313,6 +302,7 @@ impl FileSystem {
         Ok(())
     }
 
+    #[trace_log]
     pub fn read_blk(&self, blk: u64) -> Result<Block> {
         let block: Block = self.disk.read_block(blk as usize)?;
         Ok(block)

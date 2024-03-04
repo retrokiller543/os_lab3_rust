@@ -1,3 +1,6 @@
+use logger_macro::trace_log;
+
+#[trace_log]
 pub fn absolutize_from(path: &str, cwd: &str) -> String {
     let mut tokens: Vec<&str> = vec![];
     let mut has_change = false;
@@ -50,6 +53,7 @@ pub fn absolutize_from(path: &str, cwd: &str) -> String {
     }
 }
 
+#[trace_log]
 pub fn split_path(path: String) -> (String, String) {
     // To find the parent directory path
     let parts: Vec<&str> = path.split('/').collect();

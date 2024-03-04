@@ -2,6 +2,7 @@ use anyhow::Result;
 use serde_derive::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Debug;
+use logger_macro::trace_log;
 
 use crate::errors::FileError;
 use crate::utils::fixed_str::FixedString;
@@ -121,14 +122,17 @@ impl Block {
         serialized.len()
     }
 
+    #[trace_log]
     pub fn get_entry(&self, name: &FixedString) -> Option<&DirEntry> {
         self.entries.iter().find(|entry| entry.name == *name)
     }
 
+    #[trace_log]
     pub fn get_entry_mut(&mut self, name: &FixedString) -> Option<&mut DirEntry> {
         self.entries.iter_mut().find(|entry| entry.name == *name)
     }
 
+    #[trace_log]
     pub fn add_entry(&mut self, entry: DirEntry) -> Result<()> {
         if let Some(index) = self.entries.iter().position(|item| item.name.is_empty()) {
             self.entries[index] = entry;
@@ -140,6 +144,7 @@ impl Block {
 
     /// Removes an entry from the block.
     /// Get the block num before this as this will be deleted after this operation
+    #[trace_log]
     pub fn remove_entry(&mut self, name: &FixedString) -> Result<()> {
         if let Some(index) = self.entries.iter().position(|item| item.name == *name) {
             self.entries[index] = DirEntry::default();

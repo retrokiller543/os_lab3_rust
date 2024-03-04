@@ -2,6 +2,7 @@
 
 use anyhow::Result;
 use log::{debug, trace};
+use logger_macro::trace_log;
 
 use rustic_disk::traits::BlockStorage;
 
@@ -13,6 +14,7 @@ pub mod fixed_str;
 pub(crate) mod path_handler;
 
 impl FileSystem {
+    #[trace_log]
     pub fn read_dir_block(&self, entry: &DirEntry) -> Result<Block> {
         if entry.file_type != crate::dir_entry::FileType::Directory {
             return Err(FileError::NotADirectory(entry.clone().name).into());
@@ -27,6 +29,7 @@ impl FileSystem {
         Ok(block)
     }
 
+    #[trace_log]
     fn read_root_dir(&self) -> Result<Block> {
         let root_entry = DirEntry::new(
             fixed_str::FixedString::from("/"),
@@ -41,6 +44,7 @@ impl FileSystem {
         Ok(root_block)
     }
 
+    #[trace_log]
     pub fn change_dir(&mut self, path: &str) -> Result<()> {
         let abs_path = path_handler::absolutize_from(path, &self.curr_block.path);
         let (parent, name) = path_handler::split_path(abs_path.clone());
@@ -94,11 +98,8 @@ impl FileSystem {
         Ok(())
     }
 
+    #[trace_log]
     fn traverse_dir(&self, path: String) -> Result<Block> {
-        #[cfg(feature = "trace")]
-        {
-            trace!("traverse_dir({})", path)
-        }
         let names = path
             .split('/')
             .filter(|&c| !c.is_empty())
@@ -136,6 +137,7 @@ impl FileSystem {
         Ok(block)
     }
 
+    #[trace_log]
     pub fn print_working_dir(&self) -> Result<()> {
         let path = if self.curr_block.path.is_empty() {
             "/".to_string()
