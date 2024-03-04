@@ -3,18 +3,18 @@
 use anyhow::Result;
 #[cfg(feature = "debug")]
 use log::debug;
+use path_absolutize::Absolutize;
 use rustic_disk::traits::BlockStorage;
 use std::path::Path;
-use path_absolutize::Absolutize;
 
 use crate::dir_entry::FileType;
-use crate::errors::{FileError, FSError};
-use crate::FileSystem;
+use crate::errors::{FSError, FileError};
 use crate::prelude::File;
+use crate::FileSystem;
 
+pub mod dirs;
 pub mod fixed_str;
 pub(crate) mod path_handler;
-pub mod dirs;
 
 impl FileSystem {
     /// The remove functon is used to delete a file from the current directory

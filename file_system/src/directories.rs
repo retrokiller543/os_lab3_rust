@@ -1,9 +1,9 @@
-use anyhow::Result;
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
-use crate::errors::{FileError};
+use crate::errors::FileError;
 use crate::traits::Directory;
 use crate::utils::path_handler::{absolutize_from, split_path};
 use crate::FileSystem;
+use anyhow::Result;
 
 impl Directory for FileSystem {
     /// Creates a directory in the current directory

@@ -123,9 +123,9 @@ mod tests {
 
 #[cfg(test)]
 mod generic_tests {
-    use rustic_disk::Disk;
     use crate::dir_entry::{DirEntry, FileType};
     use crate::FileSystem;
+    use rustic_disk::Disk;
 
     #[test]
     fn test_file_system_creation() {
@@ -154,11 +154,11 @@ mod generic_tests {
 
 #[cfg(test)]
 mod format_tests {
+    use crate::dir_entry::{DirBlock, FileType};
+    use crate::prelude::Format;
+    use crate::FileSystem;
     use anyhow::Result;
     use rustic_disk::Disk;
-    use crate::dir_entry::{DirBlock, FileType};
-    use crate::FileSystem;
-    use crate::prelude::Format;
 
     #[test]
     fn test_format() -> Result<()> {

@@ -13,12 +13,14 @@ use rustic_disk::Disk;
 
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::FSError;
-use crate::fat::{FAT, FatType};
+use crate::fat::{FatType, FAT};
 use file_data::FileData;
 
 mod dir_entry;
 mod directories;
 mod errors;
+mod fat;
+mod file_data;
 mod files;
 mod format;
 mod other;
@@ -26,8 +28,6 @@ pub mod prelude;
 mod tests;
 pub mod traits;
 mod utils;
-mod fat;
-mod file_data;
 
 const ROOT_BLK: u64 = 0;
 const FAT_BLK: u64 = 1;

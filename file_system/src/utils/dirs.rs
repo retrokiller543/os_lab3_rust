@@ -1,10 +1,10 @@
+use crate::dir_entry::{DirBlock, DirEntry};
+use crate::errors::FileError;
+use crate::utils::{fixed_str, path_handler};
+use crate::{FileSystem, ROOT_BLK};
 use log::debug;
 use logger_macro::trace_log;
 use rustic_disk::traits::BlockStorage;
-use crate::dir_entry::{DirBlock, DirEntry};
-use crate::errors::FileError;
-use crate::{FileSystem, ROOT_BLK};
-use crate::utils::{fixed_str, path_handler};
 
 impl FileSystem {
     #[trace_log]

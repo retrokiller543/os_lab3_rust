@@ -5,7 +5,7 @@ use rustic_disk::Disk;
 
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::traits::Format;
-use crate::{FAT, FAT_BLK, FatType, FileSystem, ROOT_BLK};
+use crate::{FatType, FileSystem, FAT, FAT_BLK, ROOT_BLK};
 
 impl Format for FileSystem {
     fn format(&mut self) -> Result<()> {
