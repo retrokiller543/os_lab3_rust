@@ -1,3 +1,4 @@
+#[cfg(feature = "debug")]
 use log::debug;
 
 use logger_macro::trace_log;

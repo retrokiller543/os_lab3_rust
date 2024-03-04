@@ -7,8 +7,6 @@ use anyhow::Result;
 use log::debug;
 use path_absolutize::Absolutize;
 
-use rustic_disk::traits::BlockStorage;
-
 use crate::dir_entry::FileType;
 use crate::errors::{FileError, FSError};
 use crate::FileSystem;

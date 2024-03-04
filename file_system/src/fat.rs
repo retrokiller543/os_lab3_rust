@@ -1,3 +1,6 @@
+#![allow(clippy::upper_case_acronyms)]
+#![allow(unused_variables)]
+
 use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
 
