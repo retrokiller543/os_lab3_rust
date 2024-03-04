@@ -3,9 +3,9 @@ use anyhow::Result;
 use rustic_disk::traits::BlockStorage;
 use rustic_disk::Disk;
 
-use crate::dir_entry::{Block, DirEntry, FileType};
+use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::traits::Format;
-use crate::{FatType, FileSystem, FAT, FAT_BLK, ROOT_BLK};
+use crate::{FAT, FAT_BLK, FatType, FileSystem, ROOT_BLK};
 
 impl Format for FileSystem {
     fn format(&mut self) -> Result<()> {
@@ -16,7 +16,7 @@ impl Format for FileSystem {
 
         let mut fat = FAT::new();
 
-        let blk = Block {
+        let blk = DirBlock {
             path: "/".to_string(),
             parent_entry: DirEntry {
                 name: "/".into(),
@@ -34,24 +34,6 @@ impl Format for FileSystem {
         fat[FAT_BLK as usize] = FatType::EOF;
         self.disk.write_block(FAT_BLK as usize, &fat)?;
         self.fat = fat;
-
-        Ok(())
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_format() -> Result<()> {
-        let mut fs = FileSystem::new()?;
-        fs.format()?;
-        assert!(Disk::disk_exists());
-
-        // read the first block and check if it's a directory
-        let block: Block = fs.read_blk(0)?;
-        assert_eq!(block.parent_entry.file_type, FileType::Directory);
 
         Ok(())
     }

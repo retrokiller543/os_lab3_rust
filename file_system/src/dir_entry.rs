@@ -58,7 +58,7 @@ impl DirEntry {
 }
 
 #[derive(Default, Serialize, Deserialize, PartialEq, Clone)]
-pub struct Block {
+pub struct DirBlock {
     #[serde(skip_deserializing, skip_serializing)]
     pub(crate) path: String,
     #[serde(skip_deserializing, skip_serializing)]
@@ -68,7 +68,7 @@ pub struct Block {
     pub(crate) entries: Vec<DirEntry>,
 }
 
-impl Debug for Block {
+impl Debug for DirBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // get number of filled entries vs total entries
         let filled = self
@@ -91,10 +91,10 @@ impl Debug for Block {
     }
 }
 
-impl Block {
+impl DirBlock {
     pub fn new(parent_entry: DirEntry, blk_num: u16) -> Self {
         let entries = vec![DirEntry::default(); FileSystem::num_entries()];
-        Block {
+        DirBlock {
             path: "".to_string(),
             parent_entry,
             blk_num,
@@ -107,8 +107,8 @@ impl Block {
         serialized.len()
     }
 
-    pub fn gen_max_size_block() -> Block {
-        Block {
+    pub fn gen_max_size_block() -> DirBlock {
+        DirBlock {
             path: "".to_string(),
             parent_entry: DirEntry::gen_max_size_entry(),
             blk_num: u16::MAX,
