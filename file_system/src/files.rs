@@ -77,6 +77,7 @@ impl File for FileSystem {
             debug!("Name: {}", name);
         }
 
+        // Controls so that the length isn´t longer than 55 chars
         if name.len() > 55 {
             return Err(FileError::FilenameTooLong.into());
         } else if name.is_empty() {
@@ -218,6 +219,7 @@ impl File for FileSystem {
         Ok(())
     }
 
+    /// The append function
     fn append_file(&mut self, source: &str, dest: &str) -> anyhow::Result<()> {
         let src_binding = Path::new(source).absolutize()?;
         let src_path = src_binding.to_str().ok_or(FSError::PathError)?;

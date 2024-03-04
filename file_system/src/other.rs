@@ -10,6 +10,7 @@ use crate::utils::fixed_str::FixedString;
 use crate::FileSystem;
 
 impl FileSystem {
+    /// The remove functon is used to delete a file from the current directory
     pub fn remove_entry(&mut self, name: &str) -> Result<()> {
         let binding = Path::new(name).absolutize()?;
         let path = binding.to_str().ok_or(FSError::PathError)?;
@@ -40,6 +41,7 @@ impl FileSystem {
 }
 
 impl DirEntryHandling for FileSystem {
+    /// The move function is used to move a file from one directory to another
     fn move_entry(&mut self, source: &str, dest: &str) -> Result<()> {
         let src_binding = Path::new(source).absolutize()?;
         let src_path = src_binding.to_str().ok_or(FSError::PathError)?;
@@ -86,6 +88,7 @@ impl DirEntryHandling for FileSystem {
         Ok(())
     }
 
+    /// The copy function is used to copy a file from one directory to another
     fn copy_entry(&mut self, source: &str, dest: &str) -> Result<()> {
         let src_binding = Path::new(source).absolutize()?;
         let src_path = src_binding.to_str().ok_or(FSError::PathError)?;
