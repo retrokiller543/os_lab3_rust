@@ -26,7 +26,7 @@ mod format;
 mod other;
 pub mod prelude;
 mod tests;
-pub mod traits;
+mod traits;
 mod utils;
 
 const ROOT_BLK: u64 = 0;
@@ -36,6 +36,29 @@ pub struct FileSystem {
     disk: Disk,
     curr_block: DirBlock,
     fat: FAT,
+}
+
+const READ: u8 = 0x04;
+const WRITE: u8 = 0x02;
+const EXECUTE: u8 = 0x01;
+const READ_WRITE: u8 = READ | WRITE;
+const READ_EXECUTE: u8 = READ | EXECUTE;
+const WRITE_EXECUTE: u8 = WRITE | EXECUTE;
+const READ_WRITE_EXECUTE: u8 = READ | WRITE | EXECUTE;
+const NONE: u8 = 0x00;
+
+fn get_access_rights(access: u8) -> String {
+    match access {
+        READ_WRITE_EXECUTE => "rwx".to_string(),
+        READ_WRITE => "rw-".to_string(),
+        READ_EXECUTE => "r-x".to_string(),
+        READ => "r--".to_string(),
+        WRITE_EXECUTE => "-wx".to_string(),
+        WRITE => "-w-".to_string(),
+        EXECUTE => "--x".to_string(),
+        NONE => "---".to_string(),
+        _ => "???".to_string(),
+    }
 }
 
 impl FileSystem {
@@ -196,22 +219,29 @@ impl FileSystem {
     }
 
     #[trace_log]
-    pub fn clear_file_data(&self, start_blk: u16) -> Result<()> {
+    pub fn clear_file_data(&mut self, start_blk: u16) -> Result<()> {
         let mut blk_num = start_blk;
         let zero_data = vec![0u8; Disk::BLOCK_SIZE];
 
         // Recursive closure to clear blocks following the FAT
-        let clear_blocks_recursively = |blk_num: &mut u16| -> Result<()> {
+        let mut clear_blocks_recursively = |blk_num: &mut u16| -> Result<()> {
             loop {
                 match self.fat.get(*blk_num as usize) {
                     Some(&FatType::Taken(next_blk)) => {
                         // Instead of reading, we write zeroes to the block
                         self.disk.write_raw_data(*blk_num as usize, &zero_data)?;
+
+                        let lol: usize = blk_num.clone() as usize;
+                        self.fat[lol] = FatType::Free;
+                        self.disk.write_block(FAT_BLK as usize, &self.fat)?;
                         *blk_num = next_blk;
                     }
                     Some(&FatType::EOF) => {
                         // Clear the EOF block as well
                         self.disk.write_raw_data(*blk_num as usize, &zero_data)?;
+                        let lol: usize = blk_num.clone() as usize;
+                        self.fat[lol] = FatType::Free;
+                        self.disk.write_block(FAT_BLK as usize, &self.fat)?;
                         break;
                     }
                     _ => return Err(FSError::InvalidBlockReference.into()),
@@ -224,6 +254,21 @@ impl FileSystem {
         clear_blocks_recursively(&mut blk_num)?;
 
         Ok(())
+    }
+
+    #[trace_log]
+    pub fn remove_dir_data(&mut self, blk: u16) -> Result<()> {
+        let block: DirBlock = self.disk.read_block(blk as usize)?;
+
+        for entry in &block.entries {
+            let new_name = format!("{}{}", block.path, entry.name);
+            self.remove_entry(&new_name)?
+        }
+
+        self.fat[blk as usize] = FatType::Free;
+        self.disk.write_block(FAT_BLK as usize, &self.fat)?;
+        Ok(())
+
     }
 
     #[trace_log]

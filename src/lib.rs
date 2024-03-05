@@ -5,7 +5,6 @@ use env_logger::{Builder, Env};
 use rustic_shell::Shell;
 use std::fs::File;
 use std::io::Write;
-use wasm_bindgen::prelude::wasm_bindgen;
 
 pub fn setup_logger() -> Result<()> {
     // Get the current timestamp
@@ -37,7 +36,7 @@ pub fn setup_logger() -> Result<()> {
         .init();
     Ok(())
 }
-#[wasm_bindgen]
+
 pub fn run_shell() {
     setup_logger().unwrap();
 

@@ -2,6 +2,9 @@ use crate::prelude::Input;
 
 #[cfg(test)]
 mod path_tests;
+#[cfg(test)]
+
+mod task1;
 
 #[derive(Debug)]
 pub(crate) struct MockInput {
@@ -156,7 +159,7 @@ mod generic_tests {
         fs.create_dir("d1")?;
         fs.create_dir("d1/d2")?;
         let results = fs.create_file_with_content("d2/f1", "Hello, World!");
-        assert!(results.is_ok()); // We should not find the directory d2
+        assert!(results.is_err()); // We should not find the directory d2
         Disk::delete_disk()?;
         Ok(())
     }

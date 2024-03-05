@@ -10,7 +10,7 @@ impl Directory for FileSystem {
     /// Creates a directory in the current directory
     fn create_dir(&mut self, path: &str) -> Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
-        let (parent, name) = split_path(abs_path);
+        let (parent, name) = split_path(abs_path.clone());
 
         if name.len() > 55 {
             return Err(FileError::FilenameTooLong.into());
@@ -18,7 +18,9 @@ impl Directory for FileSystem {
             return Err(FileError::InvalidFilename(name.to_string()).into());
         }
 
-        match self.curr_block.get_entry(&name.clone().into()) {
+        let mut parent_block = self.traverse_dir(parent)?;
+
+        match parent_block.get_entry(&name.clone().into()) {
             Some(entry) => {
                 return if entry.file_type == FileType::Directory {
                     Err(FileError::DirectoryExists(name.into()).into())
@@ -31,16 +33,31 @@ impl Directory for FileSystem {
                     DirEntry::new(name.into(), FileType::Directory, 0, self.get_free_block()?);
                 let new_block = DirBlock::new(new_entry.clone(), new_entry.blk_num);
                 self.write_data::<DirBlock>(&new_block, new_entry.blk_num)?;
-                self.curr_block.add_entry(new_entry)?;
-                self.write_curr_blk()?;
+                parent_block.add_entry(new_entry)?;
+                self.update_dir(&mut parent_block, abs_path)?;
             }
         }
+
         Ok(())
     }
 
     /// Deletes a directory in the current directory
-    fn delete_dir(&mut self, name: &str) -> Result<()> {
-        unimplemented!()
+    fn delete_dir(&mut self, path: &str) -> Result<()> {
+        let abs_path = absolutize_from(path, &self.curr_block.path);
+        let (parent, name) = split_path(abs_path.clone());
+
+        let mut parent_block = self.traverse_dir(parent.clone())?;
+        let binding = parent_block.clone();
+        let entry = binding.get_entry(&name.into()).ok_or(FileError::FileNotFound)?;
+
+        if entry.file_type != FileType::Directory {
+            return Err(FileError::NotADirectory(path.into()).into());
+        }
+
+        self.remove_dir_data(entry.blk_num)?;
+        parent_block.remove_entry(&entry.name)?;
+        self.write_dir_block(&parent_block)?;
+        Ok(())
     }
 
     fn list_dir(&self) -> Result<()> {

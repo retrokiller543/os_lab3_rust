@@ -16,14 +16,14 @@ pub trait File {
     // this is only since we need to test the file system, and we need to create a file with content
     fn create_file_with_content(&mut self, name: &str, content: &str) -> Result<()>;
     fn create_file_stdio(&mut self, name: &str) -> Result<()>;
-    fn delete_file(&mut self, entry: &DirEntry) -> Result<()>;
+    fn delete_file(&mut self, path: &str) -> Result<()>;
     fn read_file(&self, name: &str) -> Result<()>;
     fn append_file(&mut self, source: &str, dest: &str) -> Result<()>;
 }
 
 pub trait Directory {
     fn create_dir(&mut self, name: &str) -> Result<()>;
-    fn delete_dir(&mut self, name: &str) -> Result<()>;
+    fn delete_dir(&mut self, path: &str) -> Result<()>;
     fn list_dir(&self) -> Result<()>;
 }
 

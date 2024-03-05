@@ -132,12 +132,21 @@ impl File for FileSystem {
         Ok(())
     }
 
-    #[trace_log]
-    fn delete_file(&mut self, entry: &DirEntry) -> anyhow::Result<()> {
-        self.clear_file_data(entry.blk_num)?;
-        self.curr_block.remove_entry(&entry.name)?;
+    //#[trace_log]
+    fn delete_file(&mut self, path: &str) -> anyhow::Result<()> {
+        let abs_path = absolutize_from(&path, &self.curr_block.path);
+        let (parent, name) = split_path(abs_path.clone());
 
-        self.write_curr_blk()?;
+        let mut parent_block = self.traverse_dir(parent.clone())?;
+        let binding = parent_block.clone();
+        let entry = binding.get_entry(&name.into()).ok_or(FileError::FileNotFound)?;
+
+        self.clear_file_data(entry.blk_num)?;
+        parent_block.remove_entry(&entry.name)?;
+
+        self.fat[entry.blk_num as usize] = crate::fat::FatType::Free;
+
+        self.write_dir_block(&parent_block)?;
         Ok(())
     }
 
