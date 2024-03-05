@@ -20,8 +20,9 @@ impl FileSystem {
         let abs_path = absolutize_from(name, &self.curr_block.path);
         let (parent, name) = path_handler::split_path(abs_path.clone());
 
-        let entry = self
-            .curr_block
+        let parent_block = self.traverse_dir(parent.clone())?;
+
+        let entry = parent_block
             .get_entry(&name.clone().into())
             .ok_or(FileError::FileNotFound)?
             .clone();

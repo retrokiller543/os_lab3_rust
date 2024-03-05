@@ -37,9 +37,10 @@ pub fn setup_logger() -> Result<()> {
     Ok(())
 }
 
-pub fn run_shell() {
-    setup_logger().unwrap();
+pub fn run_shell() -> Result<()> {
+    setup_logger()?;
 
-    let mut shell = Shell::new().unwrap();
-    shell.run().unwrap();
+    let mut shell = Shell::new()?;
+    shell.run()?;
+    Ok(())
 }

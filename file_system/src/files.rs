@@ -132,7 +132,7 @@ impl File for FileSystem {
         Ok(())
     }
 
-    //#[trace_log]
+    #[trace_log]
     fn delete_file(&mut self, path: &str) -> anyhow::Result<()> {
         let abs_path = absolutize_from(&path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());

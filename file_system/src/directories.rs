@@ -1,4 +1,5 @@
 use anyhow::Result;
+use logger_macro::trace_log;
 
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::FileError;
@@ -42,6 +43,7 @@ impl Directory for FileSystem {
     }
 
     /// Deletes a directory in the current directory
+    #[trace_log]
     fn delete_dir(&mut self, path: &str) -> Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
@@ -54,7 +56,7 @@ impl Directory for FileSystem {
             return Err(FileError::NotADirectory(path.into()).into());
         }
 
-        self.remove_dir_data(entry.blk_num)?;
+        self.remove_dir_data(entry, path)?;
         parent_block.remove_entry(&entry.name)?;
         self.write_dir_block(&parent_block)?;
         Ok(())

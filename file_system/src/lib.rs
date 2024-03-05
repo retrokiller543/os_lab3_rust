@@ -15,6 +15,7 @@ use rustic_disk::Disk;
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::FSError;
 use crate::fat::{FatType, FAT};
+use crate::prelude::{Directory, File};
 
 mod dir_entry;
 mod directories;
@@ -256,19 +257,29 @@ impl FileSystem {
         Ok(())
     }
 
-    #[trace_log]
-    pub fn remove_dir_data(&mut self, blk: u16) -> Result<()> {
-        let block: DirBlock = self.disk.read_block(blk as usize)?;
+    //#[trace_log]
+    pub fn remove_dir_data(&mut self, dir_entry: &DirEntry, path: &str) -> Result<()> {
+        let block: DirBlock = self.read_dir_block(dir_entry)?;
 
         for entry in &block.entries {
-            let new_name = format!("{}{}", block.path, entry.name);
-            self.remove_entry(&new_name)?
+            if entry.name.is_empty() {
+                continue;
+            }
+
+            let new_path = format!("{}/{}", path, entry.name);
+
+            match entry.file_type {
+                FileType::File => self.delete_file(&new_path)?,
+                FileType::Directory => self.remove_dir_data(&entry, &new_path)?,
+            }
         }
 
-        self.fat[blk as usize] = FatType::Free;
+        let zero_data = vec![0u8; Disk::BLOCK_SIZE];
+        self.disk.write_raw_data(dir_entry.blk_num as usize, &zero_data)?;
+
+        self.fat[dir_entry.blk_num as usize] = FatType::Free;
         self.disk.write_block(FAT_BLK as usize, &self.fat)?;
         Ok(())
-
     }
 
     #[trace_log]
