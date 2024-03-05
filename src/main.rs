@@ -1,44 +1,8 @@
 use anyhow::Result;
-use chrono::Local;
-use env_logger::{Builder, Env};
-use rustic_shell::Shell;
-use std::fs::File;
-use std::io::Write;
-
-fn setup_logger() -> Result<()> {
-    // Get the current timestamp
-    let now = Local::now();
-    // Format the timestamp as a string in the desired format
-    let timestamp = now.format("%Y-%m-%d_%H-%M-%S").to_string();
-    // Create the log filename with the timestamp
-    let log_filename = format!("logs/{}.log", timestamp);
-
-    let file = File::create(log_filename)?;
-
-    Builder::from_env(Env::default().default_filter_or("info"))
-        .format(|buf, record| {
-            writeln!(
-                buf,
-                "[{} {} - {}:{}] {}",
-                Local::now().format("%Y-%m-%d %H:%M:%S"),
-                record.level(),
-                record
-                    .file()
-                    .unwrap_or(record.module_path().unwrap_or("unknown")),
-                record.line().unwrap_or(0),
-                record.args()
-            )
-        })
-        .target(env_logger::Target::Pipe(Box::new(file)))
-        .init();
-    Ok(())
-}
+use os_lab3::run_shell;
 
 fn main() -> Result<()> {
-    setup_logger()?;
+    run_shell()?;
 
-    let mut shell = Shell::new()?;
-
-    shell.run()?;
     Ok(())
 }

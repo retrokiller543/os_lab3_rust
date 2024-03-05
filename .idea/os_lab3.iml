@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/rustic_shell/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/logger_macro/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/wasm_os_server/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

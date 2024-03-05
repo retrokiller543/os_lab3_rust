@@ -1,16 +1,12 @@
 // Helper functions and structs
 
-use std::path::Path;
-
 use anyhow::Result;
-#[cfg(feature = "debug")]
-use log::debug;
-use path_absolutize::Absolutize;
 
 use crate::dir_entry::FileType;
-use crate::errors::{FSError, FileError};
+use crate::errors::FileError;
 use crate::prelude::File;
 use crate::FileSystem;
+use crate::utils::path_handler::absolutize_from;
 
 pub mod dirs;
 pub mod fixed_str;
@@ -19,18 +15,8 @@ pub(crate) mod path_handler;
 impl FileSystem {
     /// The remove functon is used to delete a file from the current directory
     pub fn remove_entry(&mut self, name: &str) -> Result<()> {
-        let binding = Path::new(name).absolutize()?;
-        let path = binding.to_str().ok_or(FSError::PathError)?;
-        let parent = Path::new(&path)
-            .parent()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?;
-        let name = Path::new(&path)
-            .file_name()
-            .unwrap()
-            .to_str()
-            .ok_or(FSError::PathError)?;
+        let abs_path = absolutize_from(name, &self.curr_block.path);
+        let (parent, name) = path_handler::split_path(abs_path.clone());
 
         let entry = self
             .curr_block
