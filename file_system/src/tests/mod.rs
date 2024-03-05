@@ -5,6 +5,7 @@ mod path_tests;
 #[cfg(test)]
 
 mod task1;
+mod task2;
 
 #[derive(Debug)]
 pub(crate) struct MockInput {
