@@ -2,3 +2,5 @@
 diskfile.bin
 *.log
 *.exe
+
+/node_modules
