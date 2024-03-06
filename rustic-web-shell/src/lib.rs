@@ -3,7 +3,7 @@ use leptos_meta::*;
 use leptos_router::*;
 use log::{error, info};
 use file_system::FileSystem;
-use file_system::prelude::{Directory, IOHandler, IOHandlerError};
+use file_system::prelude::{Directory, File, Format, IOHandler, IOHandlerError};
 
 // Modules
 mod components;
@@ -15,7 +15,7 @@ use crate::pages::not_found::NotFound;
 
 #[derive(Debug)]
 pub struct MemIOHandler {
-    buffer: Vec<String>,
+    pub buffer: Vec<String>,
 }
 
 impl MemIOHandler {
@@ -44,20 +44,13 @@ impl IOHandler for MemIOHandler {
     }
 }
 
-pub fn ls() -> Result<String, String> {
-    let mut fs = FileSystem::new(Box::new(MemIOHandler::new())).map_err(|e| e.to_string())?;
-    match fs.list_dir().map_err(|e| e.to_string()) {
-        Ok(_) => {
-            println!("Listing directory contents...");
-        }
-        Err(e) => {
-            let error = format!("Failed to list directory contents: {}", e);
-            eprintln!("{}", error);
-            return Err(error);
-        }
-    };
-    let output = fs.io_handler.read().map_err(|e| e.to_string())?;
-    Ok(output)
+pub fn read_all(io_handler: &mut dyn IOHandler<Input = String, Output = String>) -> Vec<String> {
+    let mut buffer = Vec::new();
+
+    while let Ok(line) = io_handler.read() {
+        buffer.push(line);
+    }
+    buffer.iter().rev().map(|s| s.to_string()).collect()
 }
 
 /// An app router which renders the homepage and handles 404's
@@ -67,7 +60,7 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
 
     view! {
-        <Html lang="en" dir="ltr" attr:data-theme="light"/>
+        <Html lang="en" dir="ltr" attr:data-theme="dark"/>
 
         // sets the document title
         <Title text="RusticOS"/>

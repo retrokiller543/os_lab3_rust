@@ -60,3 +60,10 @@ button {
   overflow-y: scroll;
   white-space: pre-wrap;
 }
+
+/* center all pre tags */
+pre {
+  text-align: left;
+  margin: 0 auto;
+  padding: 2rem;
+}

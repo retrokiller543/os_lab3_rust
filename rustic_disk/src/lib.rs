@@ -395,11 +395,31 @@ impl BlockStorage for Disk {
     }
 
     fn write_raw_data(&mut self, block_index: usize, data: &[u8]) -> Result<(), DiskError> {
-        todo!()
+        if data.len() > Self::BLOCK_SIZE {
+            return Err(DiskError::DataExceedsBlockSize);
+        }
+        let position = self.get_block_position(block_index)? as usize;
+        let end = position + data.len();
+        if end > self.storage.len() {
+            return Err(DiskError::WriteDiskError(io::Error::new(
+                io::ErrorKind::Other,
+                "Write error",
+            )));
+        }
+        self.storage[position..end].copy_from_slice(&data);
+        Ok(())
     }
 
     fn read_raw_data(&self, block_index: usize) -> Result<Vec<u8>, DiskError> {
-        todo!()
+        let position = self.get_block_position(block_index)? as usize;
+        let end = position + Self::BLOCK_SIZE;
+        if end > self.storage.len() {
+            return Err(DiskError::ReadDiskError(io::Error::new(
+                io::ErrorKind::Other,
+                "Read error",
+            )));
+        }
+        Ok(self.storage[position..end].to_vec())
     }
 }
 
