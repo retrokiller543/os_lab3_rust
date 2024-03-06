@@ -9,7 +9,7 @@ fn test_create() -> anyhow::Result<()> {
     fs.format()?;
     let t1 = fs.create_file_with_content("f1", "Hello, World!");
     assert!(t1.is_ok());
-    Disk::delete_disk()?;
+    fs.disk.delete_disk()?;
     Ok(())
 }
 
@@ -19,7 +19,7 @@ fn test_create_large_file() -> anyhow::Result<()> {
     fs.format()?;
     let t2 = fs.create_file_with_content("f1111", "Hello, World!".repeat(100).as_str());
     assert!(t2.is_ok());
-    Disk::delete_disk()?;
+    fs.disk.delete_disk()?;
     Ok(())
 }
 
@@ -32,7 +32,7 @@ fn test_cat() -> anyhow::Result<()> {
     assert!(t3.is_ok());
     let t31 = fs.read_file("f4");
     assert!(t31.is_err());
-    Disk::delete_disk()?;
+    fs.disk.delete_disk()?;
     Ok(())
 }
 
@@ -44,7 +44,7 @@ fn test_long_name() -> anyhow::Result<()> {
     assert!(t4.is_ok());
     let t41 = fs.create_file_with_content("AbcdefghijAbcddefghijAbcdefghijAbcdefghijAbcdefghijAbcde", "Hello, World!");
     assert!(t41.is_err());
-    Disk::delete_disk()?;
+    fs.disk.delete_disk()?;
     Ok(())
 }
 
@@ -58,5 +58,6 @@ fn test_nr_of_files() -> anyhow::Result<()> {
         dbg!(&i);
         assert!(t.is_ok());
     }
+    fs.disk.delete_disk()?;
     Ok(())
 }

@@ -118,7 +118,8 @@ impl FileSystem {
             (root_block, fat, disk)
         } else {
             let disk = Disk::new()?;
-            let root_block: DirBlock = disk.read_block(0)?;
+            let mut root_block: DirBlock = disk.read_block(0)?;
+            root_block.parent_entry.file_type = FileType::Directory;
             let fat: FAT = disk.read_block(1)?;
             (root_block, fat, disk)
         };
@@ -135,6 +136,11 @@ impl FileSystem {
             fat,
             io_handler,
         })
+    }
+
+    pub fn update_curr_dir(&mut self) -> Result<()> {
+        self.curr_block = self.read_dir_block(&self.curr_block.parent_entry)?;
+        Ok(())
     }
 
     #[trace_log]

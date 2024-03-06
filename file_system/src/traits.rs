@@ -38,6 +38,10 @@ pub trait DirEntryHandling {
     fn copy_entry(&mut self, source: &str, dest: &str) -> Result<()>;
 }
 
+pub trait Permissions {
+    fn change_permissions(&mut self, path: &str, permissions: u8) -> Result<()>;
+}
+
 pub trait IOHandler where Self: Debug {
     type Input;
     type Output;

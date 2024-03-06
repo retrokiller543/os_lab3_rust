@@ -161,7 +161,7 @@ mod generic_tests {
         fs.create_dir("d1/d2")?;
         let results = fs.create_file_with_content("d2/f1", "Hello, World!");
         assert!(results.is_err()); // We should not find the directory d2
-        Disk::delete_disk()?;
+        fs.disk.delete_disk()?;
         Ok(())
     }
 
@@ -175,7 +175,7 @@ mod generic_tests {
         fs.change_dir("d1")?;
         let result = fs.append_file("f1", "../f2");
         assert!(result.is_ok());
-        Disk::delete_disk()?;
+        fs.disk.delete_disk()?;
         Ok(())
     }
 }

@@ -213,7 +213,7 @@ impl File for FileSystem {
             debug!("Data: {}", data);
         }
 
-        println!("{}", data);
+        //println!("{}", data);
         self.io_handler.write(data)?;
 
         Ok(())
