@@ -8,7 +8,7 @@ use logger_macro::trace_log;
 
 use crate::errors::FileError;
 use crate::utils::fixed_str::FixedString;
-use crate::FileSystem;
+use crate::{FileSystem, READ_WRITE};
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Copy, Clone)]
 pub enum FileType {
@@ -23,6 +23,7 @@ pub struct DirEntry {
     pub(crate) file_type: FileType,
     pub(crate) size: u64,
     pub(crate) blk_num: u16,
+    pub(crate) access_level: u8,
 }
 
 impl DirEntry {
@@ -32,6 +33,7 @@ impl DirEntry {
             file_type,
             size,
             blk_num,
+            access_level: READ_WRITE,
         }
     }
 
@@ -55,6 +57,7 @@ impl DirEntry {
             file_type: FileType::File,
             size: u64::MAX,
             blk_num: u16::MAX,
+            access_level: u8::MAX,
         }
     }
 }

@@ -32,6 +32,8 @@ pub enum FileError {
     FileExists(FixedString),
     #[error("Directory already exists with name: {0}")]
     DirectoryExists(FixedString),
+    #[error("Invalid access level: {0}")]
+    InvalidAccessLevel(u8),
 }
 
 #[derive(Error, Debug)]

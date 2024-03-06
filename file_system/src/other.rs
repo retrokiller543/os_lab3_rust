@@ -4,7 +4,7 @@ use crate::dir_entry::{DirBlock, FileType};
 use crate::errors::FileError;
 use crate::file_data::FileData;
 use crate::traits::DirEntryHandling;
-use crate::FileSystem;
+use crate::{FileSystem, READ_WRITE_EXECUTE};
 use crate::prelude::Permissions;
 use crate::utils::path_handler::{absolutize_from, split_path};
 
@@ -118,8 +118,36 @@ impl DirEntryHandling for FileSystem {
     }
 }
 
+fn convert_str_to_u8_digit(s: &str) -> Result<u8, std::num::ParseIntError> {
+    s.parse::<u8>()
+}
+
 impl Permissions for FileSystem {
-    fn change_permissions(&mut self, path: &str, permissions: u8) -> Result<()> {
-        todo!()
+    fn change_permissions(&mut self, path: &str, permissions: &str) -> Result<()> {
+        let abs_path = absolutize_from(path, &self.curr_block.path);
+        let (parent, name) = split_path(abs_path);
+        let mut parent_block = self.traverse_dir(parent)?;
+
+        // convert safley the &str permissions into a u8
+        let permissions = convert_str_to_u8_digit(permissions)?;
+
+        if let Some(entry) = parent_block.clone().get_entry_mut(&name.into()) {
+            if permissions > READ_WRITE_EXECUTE {
+                return Err(FileError::InvalidAccessLevel(permissions).into());
+            }
+
+            entry.access_level = permissions;
+            self.write_dir_block(&parent_block)?;
+
+            if entry.file_type == FileType::Directory {
+                let mut block = self.read_dir_block(entry)?;
+                block.entries.iter_mut().for_each(|entry| entry.access_level = permissions);
+                self.write_dir_block(&block)?;
+                self.update_curr_dir()?;
+            }
+        } else {
+            return Err(FileError::FileNotFound.into());
+        }
+        Ok(())
     }
 }

@@ -6,6 +6,7 @@ mod path_tests;
 
 mod task1;
 mod task2;
+mod task3;
 
 #[derive(Debug)]
 pub(crate) struct MockInput {

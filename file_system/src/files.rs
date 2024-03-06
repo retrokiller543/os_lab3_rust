@@ -16,7 +16,7 @@ use crate::prelude::{Input, InputConstructor};
 use crate::tests::MockInput;
 use crate::traits::{File, IOHandler};
 use crate::utils::path_handler::{absolutize_from, split_path};
-use crate::{FileSystem, StdIOHandler};
+use crate::{FileSystem, READ_WRITE, StdIOHandler};
 
 pub struct StdinInput{
     io: StdIOHandler,
@@ -123,6 +123,7 @@ impl File for FileSystem {
             file_type: FileType::File,
             size: file_data.get_size() as u64,
             blk_num,
+            access_level: READ_WRITE
         };
 
         #[cfg(feature = "debug")]

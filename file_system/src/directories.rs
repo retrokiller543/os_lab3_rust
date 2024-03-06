@@ -5,7 +5,7 @@ use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::FileError;
 use crate::traits::Directory;
 use crate::utils::path_handler::{absolutize_from, split_path};
-use crate::FileSystem;
+use crate::{FileSystem, get_access_rights};
 
 impl Directory for FileSystem {
     /// Creates a directory in the current directory
@@ -65,8 +65,8 @@ impl Directory for FileSystem {
     fn list_dir(&mut self) -> Result<()> {
         // Print column headers
         let header = format!(
-            "{:20} {:10} {:15} {:10}",
-            "Name", "Type", "Size (Bytes)", "Block Number"
+            "{:20} {:10} {:15} {:10} {:10}",
+            "Name", "Type", "Size (Bytes)", "Block Number", "Access Rights"
         );
 
         self.io_handler.write(header)?;
@@ -79,8 +79,8 @@ impl Directory for FileSystem {
                 };
                 // Format and print each entry according to the column widths
                 let line = format!(
-                    "{:20} {:10} {:15} {:10}",
-                    entry.name, entry_type, entry.size, entry.blk_num
+                    "{:20} {:10} {:15} {:10} {:10}",
+                    entry.name, entry_type, entry.size, entry.blk_num, get_access_rights(entry.access_level)
                 );
 
                 self.io_handler.write(line)?;

@@ -39,7 +39,7 @@ pub trait DirEntryHandling {
 }
 
 pub trait Permissions {
-    fn change_permissions(&mut self, path: &str, permissions: u8) -> Result<()>;
+    fn change_permissions(&mut self, path: &str, permissions: &str) -> Result<()>;
 }
 
 pub trait IOHandler where Self: Debug {
