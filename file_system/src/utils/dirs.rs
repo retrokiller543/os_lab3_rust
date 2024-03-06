@@ -25,7 +25,14 @@ impl FileSystem {
         Ok(block)
     }
 
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn write_dir_block(&self, block: &DirBlock) -> anyhow::Result<()> {
+        self.disk.write_block(block.blk_num as usize, block)?;
+        Ok(())
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn write_dir_block(&mut self, block: &DirBlock) -> anyhow::Result<()> {
         self.disk.write_block(block.blk_num as usize, block)?;
         Ok(())
     }
@@ -215,13 +222,13 @@ impl FileSystem {
     }
 
     #[trace_log]
-    pub fn print_working_dir(&self) -> anyhow::Result<()> {
+    pub fn print_working_dir(&mut self) -> anyhow::Result<()> {
         let path = if self.curr_block.path.is_empty() {
             "/".to_string()
         } else {
             self.curr_block.path.clone()
         };
-        println!("{}", path);
+        self.io_handler.write(path)?;
         Ok(())
     }
 }

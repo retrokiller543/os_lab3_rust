@@ -33,3 +33,10 @@ pub enum FileError {
     #[error("Directory already exists with name: {0}")]
     DirectoryExists(FixedString),
 }
+
+#[derive(Error, Debug)]
+pub enum IOHandlerError {
+    #[error("Input/Output error: {0}")]
+    IOError(String),
+    // You can add more specific error types here as needed
+}

@@ -21,8 +21,8 @@ impl MockInput {
 }
 
 impl Input for MockInput {
-    fn read_lines(&self) -> String {
-        self.input.clone()
+    fn read_lines(&mut self) -> anyhow::Result<String> {
+        Ok(self.input.clone())
     }
 }
 
@@ -155,7 +155,7 @@ mod generic_tests {
 
     #[test]
     fn create_file_inside_dir() -> anyhow::Result<()> {
-        let mut fs = FileSystem::new()?;
+        let mut fs = FileSystem::new(Box::new(StdIOHandler))?;
         fs.format()?;
         fs.create_dir("d1")?;
         fs.create_dir("d1/d2")?;
@@ -167,7 +167,7 @@ mod generic_tests {
 
     #[test]
     fn test_nested_append() -> anyhow::Result<()> {
-        let mut fs = FileSystem::new()?;
+        let mut fs = FileSystem::new(Box::new(StdIOHandler))?;
         fs.format()?;
         fs.create_dir("d1")?;
         fs.create_file_with_content("d1/f1", "Hello, World!")?;

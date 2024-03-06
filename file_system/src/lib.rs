@@ -13,9 +13,9 @@ use rustic_disk::traits::BlockStorage;
 use rustic_disk::Disk;
 
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
-use crate::errors::FSError;
+use crate::errors::{FSError, IOHandlerError};
 use crate::fat::{FatType, FAT};
-use crate::prelude::{Directory, File};
+use crate::prelude::{Directory, File, IOHandler};
 
 mod dir_entry;
 mod directories;
@@ -30,6 +30,33 @@ mod tests;
 mod traits;
 mod utils;
 
+use std::io::{self, Write};
+
+pub struct StdIOHandler;
+
+impl IOHandler for StdIOHandler {
+    type Input = String;
+    type Output = String;
+
+    fn read(&mut self) -> Result<String> {
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)
+            .map_err(|e| IOHandlerError::IOError(e.to_string()).into()) // Convert to anyhow::Error
+            .map(|_| input.trim_end().to_string())
+    }
+
+    fn write(&mut self, content: String) -> Result<()> {
+        println!("{}", content);
+        Ok(())
+    }
+}
+
+impl Debug for StdIOHandler {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "StdIOHandler")
+    }
+}
+
 const ROOT_BLK: u64 = 0;
 const FAT_BLK: u64 = 1;
 
@@ -37,6 +64,7 @@ pub struct FileSystem {
     disk: Disk,
     curr_block: DirBlock,
     fat: FAT,
+    pub io_handler: Box<dyn IOHandler<Input=String, Output=String>>,
 }
 
 const READ: u8 = 0x04;
@@ -67,9 +95,12 @@ impl FileSystem {
         Disk::BLOCK_SIZE / DirEntry::calculate_max_size()
     }
 
-    #[trace_log]
-    pub fn new() -> Result<Self> {
+    //#[trace_log]
+    pub fn new(io_handler: Box<dyn IOHandler<Input = String, Output = String>>) -> Result<Self> {
         let (curr_block, fat, disk) = if !Disk::disk_exists() {
+            #[cfg(target_arch = "wasm32")]
+            let mut disk = Disk::new()?;
+            #[cfg(not(target_arch = "wasm32"))]
             let disk = Disk::new()?;
             let fat = FAT::new();
             let root_block = DirBlock {
@@ -102,11 +133,21 @@ impl FileSystem {
             disk,
             curr_block,
             fat,
+            io_handler,
         })
     }
 
     #[trace_log]
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn write_curr_blk(&self) -> Result<()> {
+        let block_to_write = self.curr_block.blk_num;
+        self.disk
+            .write_block(block_to_write as usize, &self.curr_block)?;
+        Ok(())
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    pub fn write_curr_blk(&mut self) -> Result<()> {
         let block_to_write = self.curr_block.blk_num;
         self.disk
             .write_block(block_to_write as usize, &self.curr_block)?;

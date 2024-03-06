@@ -128,8 +128,9 @@ impl Shell {
     /// - `Err(e)`: An error if the `FileSystem::new()` call fails.
     pub fn new() -> Result<Shell> {
         trace!("Starting shell...");
+        let io_handler = Box::new(StdIOHandler); // This is a mock input handler
         Ok(Shell {
-            file_system: FileSystem::new()?,
+            file_system: FileSystem::new(io_handler)?,
         })
     }
 

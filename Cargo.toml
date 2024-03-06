@@ -1,4 +1,4 @@
-workspace = { members = ["rustic_disk", "file_system", "rustic_shell", "logger_macro"] }
+workspace = { members = ["rustic_disk", "file_system", "rustic_shell", "logger_macro", "rustic-web-shell"] }
 [package]
 name = "os_lab3"
 version = "0.1.0"
@@ -20,7 +20,7 @@ env_logger = "0.11.1"
 rustic_shell = { path = "./rustic_shell" }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wasm-bindgen = "0.2.92"
+wasm-bindgen = "0.2.90"
 wasmer = { version = "4.2.6", default-features = false, features = ["std", "wasm-bindgen", "js"] }
 # , default-features=false, features=["js-default"]
 

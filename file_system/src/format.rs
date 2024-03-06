@@ -11,7 +11,7 @@ impl Format for FileSystem {
     fn format(&mut self) -> Result<()> {
         // disk should always exist since we handle making a dsk in the constructor
         if Disk::disk_exists() {
-            Disk::delete_disk()?;
+            self.disk.delete_disk()?;
         }
 
         let mut fat = FAT::new();

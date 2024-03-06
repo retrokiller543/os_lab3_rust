@@ -1,0 +1,36 @@
+[package]
+name = "rustic-web-shell"
+version = "0.1.0"
+edition = "2021"
+authors = ["tosic.killer <emil.schutt@gmail.com>"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+anyhow = "1.0.80"
+thiserror = "1.0.57"
+leptos = { version = "0.6", features = ["csr", "nightly"] }
+leptos_meta = { version = "0.6", features = ["csr", "nightly"] }
+leptos_router = { version = "0.6", features = ["csr", "nightly"] }
+console_log = "1"
+log = "0.4"
+console_error_panic_hook = "0.1"
+file_system = { path = "../file_system" }
+lazy_static = "1.4.0"
+
+# utils
+# strum = { version = "0.25", features = ["derive", "strum_macros"] }
+# strum_macros = "0.25"
+
+
+[dev-dependencies]
+wasm-bindgen = "0.2.90"
+wasm-bindgen-test = "0.3.40"
+web-sys = { version = "0.3.67", features = ["Document", "Window", "Directory", "File"] }
+
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"

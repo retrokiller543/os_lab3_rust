@@ -62,12 +62,14 @@ impl Directory for FileSystem {
         Ok(())
     }
 
-    fn list_dir(&self) -> Result<()> {
+    fn list_dir(&mut self) -> Result<()> {
         // Print column headers
-        println!(
+        let header = format!(
             "{:20} {:10} {:15} {:10}",
             "Name", "Type", "Size (Bytes)", "Block Number"
         );
+
+        self.io_handler.write(header)?;
 
         for entry in &self.curr_block.entries {
             if !entry.name.is_empty() {
@@ -76,10 +78,12 @@ impl Directory for FileSystem {
                     FileType::Directory => "Directory",
                 };
                 // Format and print each entry according to the column widths
-                println!(
+                let line = format!(
                     "{:20} {:10} {:15} {:10}",
                     entry.name, entry_type, entry.size, entry.blk_num
                 );
+
+                self.io_handler.write(line)?;
             }
         }
 
