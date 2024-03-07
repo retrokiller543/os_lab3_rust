@@ -6,8 +6,8 @@ use rustic_disk::traits::BlockStorage;
 
 use crate::dir_entry::{DirBlock, DirEntry};
 use crate::errors::FileError;
-use crate::utils::{fixed_str, path_handler};
-use crate::{FileSystem, ROOT_BLK};
+use crate::utils::{check_access_level, fixed_str, path_handler};
+use crate::{FileSystem, READ, ROOT_BLK};
 
 impl FileSystem {
     #[trace_log]
@@ -89,7 +89,7 @@ impl FileSystem {
         Ok(root_block)
     }
 
-    #[trace_log]
+    //#[trace_log]
     pub fn change_dir(&mut self, path: &str) -> anyhow::Result<()> {
         let abs_path = path_handler::absolutize_from(path, &self.curr_block.path);
         let (parent, name) = path_handler::split_path(abs_path.clone());
@@ -124,6 +124,11 @@ impl FileSystem {
         }
 
         let parent_block = self.traverse_dir(parent)?;
+
+        // Do we have read permission for the parent directory?
+        if !check_access_level(parent_block.parent_entry.access_level, READ) {
+            return Err(FileError::NoPermissionToRead(name).into());
+        }
 
         match parent_block.get_entry(&name.clone().into()) {
             Some(entry) => {

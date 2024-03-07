@@ -21,6 +21,13 @@ pub fn check_access_level(access_level: u8, required: u8) -> Result<()> {
     Ok(())
 }
 
+pub fn check_access_level(access_level: u8, required: u8) -> Result<()> {
+    if (access_level & required) == required {
+        return Err(FileError::InvalidAccessLevel(access_level).into());
+    }
+    Ok(())
+}
+
 impl FileSystem {
     /// The remove functon is used to delete a file from the current directory
     #[trace_log]

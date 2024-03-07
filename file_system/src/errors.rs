@@ -34,6 +34,12 @@ pub enum FileError {
     DirectoryExists(FixedString),
     #[error("Invalid access level: {0}")]
     InvalidAccessLevel(u8),
+    #[error("No premission to write to file: {0}")]
+    NoPermissionToWrite(String),
+    #[error("No premission to read file: {0}")]
+    NoPermissionToRead(String),
+    #[error("No premission to execute file: {0}")]
+    NoPermissionToExecute(String),
 }
 
 #[derive(Error, Debug)]

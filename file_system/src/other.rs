@@ -1,13 +1,16 @@
+use anyhow::Result;
 use crate::dir_entry::{DirBlock, FileType};
 use anyhow::Result;
 use logger_macro::trace_log;
 
 use crate::errors::FileError;
 
+use crate::traits::DirEntryHandling;
+use crate::{FileSystem, READ, READ_WRITE_EXECUTE, WRITE};
 use crate::prelude::Permissions;
+use crate::utils::check_access_level;
 use crate::traits::DirEntryHandling;
 use crate::utils::path_handler::{absolutize_from, split_path};
-use crate::{FileSystem, READ_WRITE_EXECUTE};
 
 impl DirEntryHandling for FileSystem {
     /// The move function is used to move a file from one directory to another
@@ -21,6 +24,14 @@ impl DirEntryHandling for FileSystem {
 
         let mut src_parent_block = self.traverse_dir(src_parent)?;
         let mut dest_parent_block = self.traverse_dir(dest_parent)?;
+
+        // check if we have write permission for destnation and read permission for source
+        if !check_access_level(src_parent_block.parent_entry.access_level?, READ) {
+            return Err(FileError::NoPermissionToRead(dest_name).into());
+        }
+        if !check_access_level(dest_parent_block.parent_entry.access_level?, WRITE) {
+            return Err(FileError::NoPermissionToWrite(dest_name).into());
+        }
 
         let mut dest_is_dir = false;
 
@@ -36,7 +47,7 @@ impl DirEntryHandling for FileSystem {
         if let Some(entry) = src_parent_block.get_entry(&src_name.clone().into()) {
             let mut new_entry = entry.clone();
 
-            if !dest_is_dir {
+            if !dest_is_dir  {
                 new_entry.name = dest_name.clone().into();
             }
 
@@ -76,6 +87,14 @@ impl DirEntryHandling for FileSystem {
 
         let src_parent_block = self.traverse_dir(src_parent)?;
         let mut dest_parent_block = self.traverse_dir(dest_parent)?;
+
+        // check if we have write permission for destnation and read permission for source
+        if !check_access_level(src_parent_block.parent_entry.access_level?, READ) {
+            return Err(FileError::NoPermissionToRead(dest_name).into());
+        }
+        if !check_access_level(dest_parent_block.parent_entry.access_level?, WRITE) {
+            return Err(FileError::NoPermissionToWrite(dest_name).into());
+        }
 
         let mut dest_is_dir = false;
 

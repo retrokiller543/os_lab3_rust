@@ -3,6 +3,7 @@ use anyhow::Result;
 
 use std::fmt::Debug;
 
+
 #[cfg(feature = "debug")]
 use log::{debug, trace};
 
@@ -15,7 +16,8 @@ use crate::prelude::Input;
 use crate::tests::MockInput;
 use crate::traits::{File, IOHandler};
 use crate::utils::path_handler::{absolutize_from, split_path};
-use crate::{FileSystem, StdIOHandler, READ_WRITE};
+use crate::{FileSystem, READ, READ_WRITE, StdIOHandler, WRITE};
+use crate::utils::check_access_level;
 
 pub struct StdinInput {
     io: StdIOHandler,
@@ -82,9 +84,12 @@ impl File for FileSystem {
             return Err(FileError::InvalidFilename(name.to_string()).into());
         }
 
-        // premissions
-
         let mut parent_block = self.traverse_dir(parent)?;
+
+        //check if we have write permission
+        if !check_access_level(parent_block.parent_entry.access_level?, WRITE) {
+            return Err(FileError::NoPermissionToWrite(name).into());
+        }
 
         // make code to check if file exists and parent exists
         for entry in parent_block.entries.iter() {
@@ -154,6 +159,11 @@ impl File for FileSystem {
         let (parent, name) = split_path(abs_path.clone());
 
         let mut parent_block = self.traverse_dir(parent.clone())?;
+
+        if !check_access_level(parent_block.parent_entry.access_level?, WRITE) {
+            return Err(FileError::NoPermissionToWrite(name).into());
+        }
+
         let binding = parent_block.clone();
         let entry = binding
             .get_entry(&name.into())
@@ -175,6 +185,12 @@ impl File for FileSystem {
         let (parent, name) = split_path(abs_path);
 
         let parent_block = self.traverse_dir(parent.clone())?;
+
+        //check if we have read permission
+        if !check_access_level(parent_block.parent_entry.access_level?, READ) {
+            return Err(FileError::NoPermissionToRead(name).into());
+        }
+
 
         #[cfg(feature = "debug")]
         {
@@ -230,6 +246,14 @@ impl File for FileSystem {
 
         let src_block = self.traverse_dir(src_parent)?;
         let mut dest_block = self.traverse_dir(dest_parent)?;
+
+        //check if we have write permission for destnation and read permission for source
+        if !check_access_level(src_block.parent_entry.access_level?, READ) {
+            return Err(FileError::NoPermissionToRead(dest_name).into());
+        }
+        if !check_access_level(dest_block.parent_entry.access_level?, WRITE) {
+            return Err(FileError::NoPermissionToWrite(dest_name).into());
+        }
 
         let new_data: FileData;
 
