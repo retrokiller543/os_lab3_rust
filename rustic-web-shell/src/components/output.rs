@@ -5,7 +5,7 @@ use log::info;
 #[component]
 pub fn Output() -> impl IntoView {
     let state = expect_context::<RwSignal<GlobalState>>();
-    let mut buffer = Vec::new();
+    let buffer_signal = create_rw_signal(Vec::new());
 
     create_effect(move |_| {
         // Log the current terminal output from global state
@@ -13,12 +13,17 @@ pub fn Output() -> impl IntoView {
             "Current terminal buffer output: {:?}",
             state.get().terminal_output.get()
         );
-        buffer.extend(state.get().terminal_output.get().iter().cloned());
+        buffer_signal.set(state.get().terminal_output.get().clone());
     });
+
+    let output = move || {
+        let buffer = buffer_signal.get();
+        buffer.iter().map(|line| format!("{}\n", line)).collect::<String>()
+    };
 
     view! {
         <pre>
-            {buffer.iter().map(|line| format!("{}\n", line)).collect::<String>()}
+            {output}
         </pre>
     }
 }

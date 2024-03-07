@@ -132,7 +132,7 @@ impl DirBlock {
         self.entries.iter().find(|entry| entry.name == *name)
     }
 
-    #[trace_log]
+    //#[trace_log]
     pub fn get_entry_mut(&mut self, name: &FixedString) -> Option<&mut DirEntry> {
         self.entries
             .iter_mut()

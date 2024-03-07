@@ -304,7 +304,7 @@ impl FileSystem {
                         // Instead of reading, we write zeroes to the block
                         self.disk.write_raw_data(*blk_num as usize, &zero_data)?;
 
-                        let lol: usize = blk_num.copy() as usize;
+                        let lol: usize = blk_num.clone() as usize;
                         self.fat[lol] = FatType::Free;
                         self.disk.write_block(FAT_BLK as usize, &self.fat)?;
                         *blk_num = next_blk;
@@ -312,7 +312,7 @@ impl FileSystem {
                     Some(&FatType::EOF) => {
                         // Clear the EOF block as well
                         self.disk.write_raw_data(*blk_num as usize, &zero_data)?;
-                        let lol: usize = blk_num.copy() as usize;
+                        let lol: usize = blk_num.clone() as usize;
                         self.fat[lol] = FatType::Free;
                         self.disk.write_block(FAT_BLK as usize, &self.fat)?;
                         break;

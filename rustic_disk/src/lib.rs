@@ -25,7 +25,6 @@ use std::io;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 
-#[cfg(target_arch = "wasm32")]
 use core::fmt::Debug;
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs::{File, OpenOptions};
@@ -264,7 +263,7 @@ impl BlockStorage for Disk {
     /// # }
     /// ```
     #[trace_log]
-    fn write_block<T: Serialize>(&self, block_index: usize, data: &T) -> Result<(), DiskError> {
+    fn write_block<T: Serialize + Debug>(&self, block_index: usize, data: &T) -> Result<(), DiskError> {
         let serialized_data = bincode::serialize(data).map_err(DiskError::SerializationError)?;
         if serialized_data.len() > Self::BLOCK_SIZE {
             error!(
@@ -395,7 +394,7 @@ impl BlockStorage for Disk {
     }
 
     #[trace_log]
-    fn write_block<T: Serialize>(&mut self, block_index: usize, data: &T) -> Result<(), DiskError> {
+    fn write_block<T: Serialize + Debug>(&mut self, block_index: usize, data: &T) -> Result<(), DiskError> {
         let serialized_data = bincode::serialize(data).map_err(DiskError::SerializationError)?;
         if serialized_data.len() > Self::BLOCK_SIZE {
             return Err(DiskError::DataExceedsBlockSize);
