@@ -17,7 +17,6 @@ use std::fs;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::{Read, Seek, SeekFrom, Write};
 
-
 // Required imports for WASM
 //#[cfg(target_arch = "wasm32")]
 //use wasm_bindgen::prelude::*;
@@ -26,10 +25,10 @@ use std::io;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 
-#[cfg(not(target_arch = "wasm32"))]
-use std::fs::{File, OpenOptions};
 #[cfg(target_arch = "wasm32")]
 use core::fmt::Debug;
+#[cfg(not(target_arch = "wasm32"))]
+use std::fs::{File, OpenOptions};
 
 /// Name of the disk file on the filesystem.
 #[cfg(not(target_arch = "wasm32"))]
@@ -47,7 +46,7 @@ pub struct Disk {
     #[cfg(not(target_arch = "wasm32"))]
     diskfile: File,
     #[cfg(target_arch = "wasm32")]
-    storage: Vec<u8>
+    storage: Vec<u8>,
 }
 
 impl Disk {

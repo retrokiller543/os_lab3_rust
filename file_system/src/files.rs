@@ -3,7 +3,6 @@ use anyhow::Result;
 
 use std::fmt::Debug;
 
-
 #[cfg(feature = "debug")]
 use log::{debug, trace};
 
@@ -16,9 +15,9 @@ use crate::prelude::Input;
 use crate::tests::MockInput;
 use crate::traits::{File, IOHandler};
 use crate::utils::path_handler::{absolutize_from, split_path};
-use crate::{FileSystem, READ_WRITE, StdIOHandler};
+use crate::{FileSystem, StdIOHandler, READ_WRITE};
 
-pub struct StdinInput{
+pub struct StdinInput {
     io: StdIOHandler,
 }
 
@@ -47,7 +46,7 @@ impl Input for StdinInput {
                     }
                     data.push_str(&line);
                     data.push('\n');
-                },
+                }
                 Err(e) => return Err(e), // Propagate error
             }
         }
@@ -64,11 +63,7 @@ impl File for FileSystem {
     /// # Create a file in the current directory
     ///
     //#[trace_log]
-    fn create_file<T: Input + Debug>(
-        &mut self,
-        path: &str,
-        input_source: &mut T,
-    ) -> Result<()> {
+    fn create_file<T: Input + Debug>(&mut self, path: &str, input_source: &mut T) -> Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
 
@@ -125,7 +120,7 @@ impl File for FileSystem {
             file_type: FileType::File,
             size: file_data.get_size() as u64,
             blk_num,
-            access_level: READ_WRITE
+            access_level: READ_WRITE,
         };
 
         #[cfg(feature = "debug")]
@@ -160,7 +155,9 @@ impl File for FileSystem {
 
         let mut parent_block = self.traverse_dir(parent.clone())?;
         let binding = parent_block.clone();
-        let entry = binding.get_entry(&name.into()).ok_or(FileError::FileNotFound)?;
+        let entry = binding
+            .get_entry(&name.into())
+            .ok_or(FileError::FileNotFound)?;
 
         self.clear_file_data(entry.blk_num)?;
         parent_block.remove_entry(&entry.name)?;

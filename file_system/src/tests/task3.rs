@@ -1,8 +1,3 @@
-
-
-
-
-
 #[test]
 fn test_copy() -> anyhow::Result<()> {
     let mut fs = FileSystem::new(Box::new(StdIOHandler))?;

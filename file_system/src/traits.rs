@@ -1,14 +1,12 @@
 use anyhow::Result;
 use std::fmt::Debug;
 
-
-
 pub trait Format {
     fn format(&mut self) -> Result<()>;
 }
 
 pub trait InputConstructor {
-    fn new(io: Box<dyn IOHandler<Input=String, Output=String>>) -> Self;
+    fn new(io: Box<dyn IOHandler<Input = String, Output = String>>) -> Self;
 }
 
 pub trait Input {
@@ -43,19 +41,22 @@ pub trait Permissions {
 }
 
 pub trait IOHandlerClone {
-    fn clone_box(&self) -> Box<dyn IOHandler<Input=String, Output=String>>;
+    fn clone_box(&self) -> Box<dyn IOHandler<Input = String, Output = String>>;
 }
 
 impl<T> IOHandlerClone for T
-    where
-        T: 'static + IOHandler<Input=String, Output=String> + Clone,
+where
+    T: 'static + IOHandler<Input = String, Output = String> + Clone,
 {
-    fn clone_box(&self) -> Box<dyn IOHandler<Input=String, Output=String>> {
+    fn clone_box(&self) -> Box<dyn IOHandler<Input = String, Output = String>> {
         Box::new(self.clone())
     }
 }
 
-pub trait IOHandler where Self: Debug + IOHandlerClone {
+pub trait IOHandler
+where
+    Self: Debug + IOHandlerClone,
+{
     type Input;
     type Output;
 

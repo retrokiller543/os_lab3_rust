@@ -1,6 +1,6 @@
+use crate::GlobalState;
 use leptos::*;
 use log::info;
-use crate::GlobalState;
 
 #[component]
 pub fn Output() -> impl IntoView {
@@ -9,7 +9,10 @@ pub fn Output() -> impl IntoView {
 
     create_effect(move |_| {
         // Log the current terminal output from global state
-        info!("Current terminal buffer output: {:?}", state.get().terminal_output.get());
+        info!(
+            "Current terminal buffer output: {:?}",
+            state.get().terminal_output.get()
+        );
         buffer.extend(state.get().terminal_output.get().iter().cloned());
     });
 

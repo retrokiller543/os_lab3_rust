@@ -1,7 +1,7 @@
+use file_system::prelude::*;
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-use file_system::prelude::*;
 
 // Modules
 mod components;
@@ -18,9 +18,7 @@ pub struct MemIOHandler {
 
 impl MemIOHandler {
     fn new() -> Self {
-        MemIOHandler {
-            buffer: Vec::new(),
-        }
+        MemIOHandler { buffer: Vec::new() }
     }
 }
 
@@ -45,7 +43,7 @@ impl IOHandler for MemIOHandler {
 #[derive(Copy, Clone, Debug)]
 pub struct GlobalState {
     pub file_system: RwSignal<FileSystem>,
-    pub terminal_output: RwSignal<Vec<String>>
+    pub terminal_output: RwSignal<Vec<String>>,
 }
 
 impl GlobalState {
@@ -56,10 +54,9 @@ impl GlobalState {
 
         GlobalState {
             file_system,
-            terminal_output
+            terminal_output,
         }
     }
-
 }
 
 pub fn read_all(io_handler: &mut dyn IOHandler<Input = String, Output = String>) -> Vec<String> {

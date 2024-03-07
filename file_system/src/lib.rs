@@ -41,7 +41,8 @@ impl IOHandler for StdIOHandler {
 
     fn read(&mut self) -> Result<String> {
         let mut input = String::new();
-        io::stdin().read_line(&mut input)
+        io::stdin()
+            .read_line(&mut input)
             .map_err(|e| IOHandlerError::IOError(e.to_string()).into()) // Convert to anyhow::Error
             .map(|_| input.trim_end().to_string())
     }
@@ -67,9 +68,8 @@ pub struct FileSystem {
     curr_block: DirBlock,
     fat: FAT,
     //#[cfg(not(target_arch = "wasm32"))]
-    pub io_handler: Box<dyn IOHandler<Input = String, Output = String>>
+    pub io_handler: Box<dyn IOHandler<Input = String, Output = String>>,
 }
-
 
 impl Clone for FileSystem {
     fn clone(&self) -> Self {
@@ -84,7 +84,6 @@ impl Clone for FileSystem {
         }
     }
 }
-
 
 const READ: u8 = 0x04;
 const WRITE: u8 = 0x02;
@@ -346,7 +345,8 @@ impl FileSystem {
         }
 
         let zero_data = vec![0u8; Disk::BLOCK_SIZE];
-        self.disk.write_raw_data(dir_entry.blk_num as usize, &zero_data)?;
+        self.disk
+            .write_raw_data(dir_entry.blk_num as usize, &zero_data)?;
 
         self.fat[dir_entry.blk_num as usize] = FatType::Free;
         self.disk.write_block(FAT_BLK as usize, &self.fat)?;
