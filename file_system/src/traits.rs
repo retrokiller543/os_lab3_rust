@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::fmt::Debug;
 
-use crate::dir_entry::DirEntry;
+
 
 pub trait Format {
     fn format(&mut self) -> Result<()>;

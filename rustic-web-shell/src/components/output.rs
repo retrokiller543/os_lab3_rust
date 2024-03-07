@@ -1,7 +1,9 @@
 use leptos::*;
+use log::info;
 
 #[component]
 pub fn Output(buffer: Vec<String>) -> impl IntoView {
+    info!("Output buffer: {:?}", buffer);
 
     view! {
         <pre>

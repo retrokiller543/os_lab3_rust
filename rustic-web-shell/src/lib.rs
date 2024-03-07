@@ -1,9 +1,7 @@
 use leptos::*;
 use leptos_meta::*;
 use leptos_router::*;
-use log::{error, info};
-use file_system::FileSystem;
-use file_system::prelude::{Directory, File, Format, IOHandler, IOHandlerError};
+use file_system::prelude::{IOHandler, IOHandlerError};
 
 // Modules
 mod components;

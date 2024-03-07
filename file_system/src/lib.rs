@@ -15,7 +15,7 @@ use rustic_disk::Disk;
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::{FSError, IOHandlerError};
 use crate::fat::{FatType, FAT};
-use crate::prelude::{Directory, File, IOHandler};
+use crate::prelude::{File, IOHandler};
 
 mod dir_entry;
 mod directories;
@@ -30,7 +30,7 @@ mod tests;
 mod traits;
 mod utils;
 
-use std::io::{self, Write};
+use std::io;
 
 pub struct StdIOHandler;
 
@@ -95,8 +95,13 @@ impl FileSystem {
         Disk::BLOCK_SIZE / DirEntry::calculate_max_size()
     }
 
-    //#[trace_log]
+    #[trace_log]
     pub fn new(io_handler: Box<dyn IOHandler<Input = String, Output = String>>) -> Result<Self> {
+        #[cfg(feature = "debug")]
+        {
+            debug!("Creating new file system");
+            debug!("Max entries per block: {}", Self::num_entries());
+        }
         let (curr_block, fat, disk) = if !Disk::disk_exists() {
             #[cfg(target_arch = "wasm32")]
             let mut disk = Disk::new()?;

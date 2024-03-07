@@ -2,7 +2,7 @@ use anyhow::Result;
 use crate::dir_entry::{DirBlock, FileType};
 
 use crate::errors::FileError;
-use crate::file_data::FileData;
+
 use crate::traits::DirEntryHandling;
 use crate::{FileSystem, READ_WRITE_EXECUTE};
 use crate::prelude::Permissions;

@@ -3,30 +3,36 @@
 pub mod errors;
 pub mod traits;
 
-use std::fmt::Debug;
 use crate::errors::DiskError;
 use crate::traits::BlockStorage;
 use anyhow::Result;
-//use bincode;
+use bincode;
+#[cfg(not(target_arch = "wasm32"))]
 use log::error;
 #[cfg(feature = "debug")]
 use log::{debug, trace};
 use serde::{de::DeserializeOwned, Serialize};
+#[cfg(not(target_arch = "wasm32"))]
 use std::fs;
+#[cfg(not(target_arch = "wasm32"))]
 use std::io::{Read, Seek, SeekFrom, Write};
 
 
 // Required imports for WASM
-#[cfg(target_arch = "wasm32")]
-use wasm_bindgen::prelude::*;
+//#[cfg(target_arch = "wasm32")]
+//use wasm_bindgen::prelude::*;
 
 use std::io;
+#[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs::{File, OpenOptions};
+#[cfg(target_arch = "wasm32")]
+use core::fmt::Debug;
 
 /// Name of the disk file on the filesystem.
+#[cfg(not(target_arch = "wasm32"))]
 const DISKNAME: &str = "diskfile.bin";
 
 /// Represents a virtual disk with operations for reading and writing.

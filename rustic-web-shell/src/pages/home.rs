@@ -1,16 +1,38 @@
 use std::sync::{Arc, Mutex};
 use leptos::*;
 use file_system::FileSystem;
-use file_system::prelude::{Directory, File, Format};
+use file_system::prelude::*;
+use log::{debug, info};
 use crate::{MemIOHandler, read_all};
 use crate::components::output::Output;
+use web_sys::HtmlInputElement;
+use leptos::ev::Event;
+use leptos::ev::SubmitEvent;
+use leptos::wasm_bindgen::JsCast;
 
 // functions to handle commands, each function must have access to the file system and the terminal output signal
 
 // function to parse the command and execute the appropriate function
 
 // Adjusted `ls` function based on the provided mock-up
-pub fn ls(mut fs: &mut FileSystem) -> Result<Vec<String>, String> {
+pub fn ls(fs: &mut FileSystem) -> Result<Vec<String>, String> {
+    match fs.format().map_err(|e| e.to_string()) {
+        Ok(_) => info!("Formatted file system"),
+        Err(e) => {
+            let error = format!("Failed to format file system: {}", e);
+            eprintln!("{}", error);
+            return Err(error);
+        }
+    
+    };
+    match fs.create_file_with_content("file1.txt", "hello world!".repeat(100).as_str()).map_err(|e| e.to_string()) {
+        Ok(_) => info!("Created file1.txt with content"),
+        Err(e) => {
+            let error = format!("Failed to create file1.txt with content: {}", e);
+            eprintln!("{}", error);
+            return Err(error);
+        }
+    };
     match fs.list_dir().map_err(|e| e.to_string()) {
         Ok(_) => println!("Listing directory contents..."),
         Err(e) => {
@@ -23,6 +45,8 @@ pub fn ls(mut fs: &mut FileSystem) -> Result<Vec<String>, String> {
     let io_handler = fs.io_handler.as_mut();
 
     let output = read_all(io_handler);
+    #[cfg(debug_assertions)]
+    debug!("ls output: {:?}", output);
     Ok(output)
 }
 
@@ -40,10 +64,14 @@ fn execute_command(command: &str, file_system: &mut FileSystem, terminal_output_
 }
 
 fn handle_input(input: String, file_system: &mut FileSystem, terminal_output: ReadSignal<Vec<String>>, set_terminal_output: WriteSignal<Vec<String>>) {
-    execute_command(&input, file_system, move|output| {
-        let mut current_output = terminal_output.get();
-        current_output.extend(output);
-        set_terminal_output(current_output);
+    execute_command(&input, file_system, move |output| {
+        let current_output = terminal_output.get(); // Get current output
+        debug!("current_output: {:?}", current_output);
+        let new_output = [current_output.as_slice(), output.as_slice()].concat(); // Create a new vector
+        debug!("new_output: {:?}", new_output);
+        debug!("terminal_output: {:?}", terminal_output.get());
+        set_terminal_output(new_output); // Set the updated vector
+        debug!("terminal_output: {:?}", terminal_output.get());
     });
 }
 
@@ -51,30 +79,50 @@ fn handle_input(input: String, file_system: &mut FileSystem, terminal_output: Re
 pub fn Home() -> impl IntoView {
     let (terminal_output, set_terminal_output) = create_signal(Vec::new());
     let file_system = Arc::new(Mutex::new(FileSystem::new(Box::new(MemIOHandler::new())).unwrap()));
-    let file_system_clone = file_system.clone();
+    let (input_value, set_input_value) = create_signal(String::new()); // State for the user input
 
-    handle_input("ls".to_string(), &mut file_system_clone.lock().unwrap(), terminal_output.clone(), set_terminal_output.clone());
+    let handle_command = {
+        let file_system = file_system.clone();
+        let terminal_output = terminal_output.clone();
+        let set_terminal_output = set_terminal_output.clone();
+        move |command: String| {
+            handle_input(command, &mut file_system.lock().unwrap(), terminal_output.clone(), set_terminal_output.clone());
+        }
+    };
 
     view! {
         <div class="terminal">
             <ErrorBoundary
-                    // the fallback receives a signal containing current errors
-                    fallback=|errors| view! {
-                        <div class="error">
-                            <p>"Errors: "</p>
-                            // we can render a list of errors as strings, if we'd like
-                            <ul>
-                                {move || errors.get()
-                                    .into_iter()
-                                    .map(|(_, e)| view! { <li>{e.to_string()}</li>})
-                                    .collect_view()
-                                }
-                            </ul>
-                        </div>
-                    }
-                >
-                <Output buffer={terminal_output.get().clone()} />
-        //create a input form to get user commands
+                fallback=|errors| view! {
+                    <div class="error">
+                        <p>"Errors: "</p>
+                        <ul>
+                            {move || errors.get()
+                                .into_iter()
+                                .map(|(_, e)| view! { <li>{e.to_string()}</li>})
+                                .collect_view()
+                            }
+                        </ul>
+                    </div>
+                }
+            >
+            
+            <form on:submit=move|e: SubmitEvent| {
+                e.prevent_default(); // Prevent form submission from reloading the page
+                handle_command(input_value.get()); // Execute the command
+                set_input_value(String::new()); // Reset input field after command execution
+            }>
+                <input type="text"
+                       value={input_value.get()}
+                       on:input=move |e: Event| {
+                           if let Some(input) = e.target().unwrap().dyn_into::<HtmlInputElement>().ok() {
+                               set_input_value(input.value()); // Update input value as user types
+                           }
+                       }
+                       placeholder="Enter command"/>
+                <button type="submit">{"Execute"}</button>
+            </form>
+            <Output buffer={terminal_output.get()} />
             </ErrorBoundary>
         </div>
     }

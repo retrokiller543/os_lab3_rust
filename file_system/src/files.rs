@@ -2,7 +2,7 @@
 use anyhow::Result;
 
 use std::fmt::Debug;
-use std::io::BufRead;
+
 
 #[cfg(feature = "debug")]
 use log::{debug, trace};
@@ -12,7 +12,7 @@ use logger_macro::trace_log;
 use crate::dir_entry::{DirEntry, FileType};
 use crate::errors::FileError;
 use crate::file_data::FileData;
-use crate::prelude::{Input, InputConstructor};
+use crate::prelude::Input;
 use crate::tests::MockInput;
 use crate::traits::{File, IOHandler};
 use crate::utils::path_handler::{absolutize_from, split_path};

@@ -1,5 +1,6 @@
 use anyhow::Result;
 use logger_macro::trace_log;
+use prettytable::{Table, row, format};
 
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::FileError;
@@ -63,30 +64,37 @@ impl Directory for FileSystem {
     }
 
     fn list_dir(&mut self) -> Result<()> {
-        // Print column headers
-        let header = format!(
-            "{:20} {:10} {:15} {:10} {:10}",
-            "Name", "Type", "Size (Bytes)", "Block Number", "Access Rights"
-        );
-
-        self.io_handler.write(header)?;
-
+        let mut table = Table::new();
+        table.set_titles(row![
+            "Name".to_string(),
+            "Type".to_string(),
+            "Size (Bytes)".to_string(),
+            "Block Number".to_string(),
+            "Access Rights".to_string(),
+        ]);
+    
+        // Print each entry with dynamic column widths and explicit padding
         for entry in &self.curr_block.entries {
             if !entry.name.is_empty() {
                 let entry_type = match entry.file_type {
                     FileType::File => "File",
                     FileType::Directory => "Directory",
                 };
-                // Format and print each entry according to the column widths
-                let line = format!(
-                    "{:20} {:10} {:15} {:10} {:10}",
-                    entry.name, entry_type, entry.size, entry.blk_num, get_access_rights(entry.access_level)
-                );
 
-                self.io_handler.write(line)?;
+                table.add_row(row![
+                    entry.name.to_string(),
+                    entry_type.to_string(),
+                    entry.size.to_string(),
+                    entry.blk_num.to_string(),
+                    get_access_rights(entry.access_level).to_string(),
+                ]);
             }
         }
 
+        table.set_format(*format::consts::FORMAT_NO_LINESEP_WITH_TITLE);
+
+        self.io_handler.write(table.to_string())?;
+    
         Ok(())
     }
 }
