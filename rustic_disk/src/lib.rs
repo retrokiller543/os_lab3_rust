@@ -130,7 +130,7 @@ impl Disk {
 
     #[cfg(target_arch = "wasm32")]
     pub fn disk_exists() -> bool {
-        true // disk will always exist in WASM since it's in memory
+        false // disk will always exist in WASM since it's in memory
     }
 
     /// Deletes the disk file from the filesystem.

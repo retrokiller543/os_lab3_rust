@@ -87,7 +87,7 @@ impl File for FileSystem {
         let mut parent_block = self.traverse_dir(parent)?;
 
         //check if we have write permission
-        if !check_access_level(parent_block.parent_entry.access_level?, WRITE) {
+        if !check_access_level(parent_block.parent_entry.access_level, WRITE) {
             return Err(FileError::NoPermissionToWrite(name).into());
         }
 
@@ -160,7 +160,7 @@ impl File for FileSystem {
 
         let mut parent_block = self.traverse_dir(parent.clone())?;
 
-        if !check_access_level(parent_block.parent_entry.access_level?, WRITE) {
+        if !check_access_level(parent_block.parent_entry.access_level, WRITE) {
             return Err(FileError::NoPermissionToWrite(name).into());
         }
 
@@ -187,7 +187,7 @@ impl File for FileSystem {
         let parent_block = self.traverse_dir(parent.clone())?;
 
         //check if we have read permission
-        if !check_access_level(parent_block.parent_entry.access_level?, READ) {
+        if !check_access_level(parent_block.parent_entry.access_level, READ) {
             return Err(FileError::NoPermissionToRead(name).into());
         }
 
@@ -248,10 +248,10 @@ impl File for FileSystem {
         let mut dest_block = self.traverse_dir(dest_parent)?;
 
         //check if we have write permission for destnation and read permission for source
-        if !check_access_level(src_block.parent_entry.access_level?, READ) {
+        if !check_access_level(src_block.parent_entry.access_level, READ) {
             return Err(FileError::NoPermissionToRead(dest_name).into());
         }
-        if !check_access_level(dest_block.parent_entry.access_level?, WRITE) {
+        if !check_access_level(dest_block.parent_entry.access_level, WRITE) {
             return Err(FileError::NoPermissionToWrite(dest_name).into());
         }
 

@@ -13,19 +13,8 @@ pub mod dirs;
 pub mod fixed_str;
 pub(crate) mod path_handler;
 
-#[allow(dead_code)]
-pub fn check_access_level(access_level: u8, required: u8) -> Result<()> {
-    if (access_level & required) == required {
-        return Err(FileError::InvalidAccessLevel(access_level).into());
-    }
-    Ok(())
-}
-
-pub fn check_access_level(access_level: u8, required: u8) -> Result<()> {
-    if (access_level & required) == required {
-        return Err(FileError::InvalidAccessLevel(access_level).into());
-    }
-    Ok(())
+pub fn check_access_level(access_level: u8, required: u8) -> bool {
+    (access_level & required) == required
 }
 
 impl FileSystem {

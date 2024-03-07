@@ -107,6 +107,9 @@ fn execute_command(
                 Ok(_) => terminal_output_writer(vec!["create".to_string(), "Created file".to_string()]),
                 Err(e) => terminal_output_writer(vec![e]),
             };
+        },
+        "dbg" => {
+            terminal_output_writer(vec!["dbg".to_string(), format!("{:?}", file_system)]);
         }
         _ => terminal_output_writer(vec![format!("Unknown command: {}", command)]),
     }

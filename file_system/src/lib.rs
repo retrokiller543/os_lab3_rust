@@ -132,6 +132,7 @@ impl FileSystem {
                 parent_entry: DirEntry {
                     name: "/".into(),
                     file_type: FileType::Directory,
+                    access_level: READ_WRITE_EXECUTE,
                     ..Default::default()
                 },
                 blk_num: 0,
@@ -144,6 +145,8 @@ impl FileSystem {
             let disk = Disk::new()?;
             let mut root_block: DirBlock = disk.read_block(0)?;
             root_block.parent_entry.file_type = FileType::Directory;
+            root_block.parent_entry.access_level = READ_WRITE_EXECUTE;
+            root_block.parent_entry.name = "/".into();
             let fat: FAT = disk.read_block(1)?;
             (root_block, fat, disk)
         };

@@ -1,12 +1,10 @@
 use anyhow::Result;
 use crate::dir_entry::{DirBlock, FileType};
-use anyhow::Result;
 use logger_macro::trace_log;
 
 use crate::errors::FileError;
 
-use crate::traits::DirEntryHandling;
-use crate::{FileSystem, READ, READ_WRITE_EXECUTE, WRITE};
+use crate::{FileSystem, READ, READ_WRITE, READ_WRITE_EXECUTE, WRITE};
 use crate::prelude::Permissions;
 use crate::utils::check_access_level;
 use crate::traits::DirEntryHandling;
@@ -26,10 +24,10 @@ impl DirEntryHandling for FileSystem {
         let mut dest_parent_block = self.traverse_dir(dest_parent)?;
 
         // check if we have write permission for destnation and read permission for source
-        if !check_access_level(src_parent_block.parent_entry.access_level?, READ) {
+        if !check_access_level(src_parent_block.parent_entry.access_level, READ) {
             return Err(FileError::NoPermissionToRead(dest_name).into());
         }
-        if !check_access_level(dest_parent_block.parent_entry.access_level?, WRITE) {
+        if !check_access_level(dest_parent_block.parent_entry.access_level, WRITE) {
             return Err(FileError::NoPermissionToWrite(dest_name).into());
         }
 
@@ -46,6 +44,10 @@ impl DirEntryHandling for FileSystem {
 
         if let Some(entry) = src_parent_block.get_entry(&src_name.clone().into()) {
             let mut new_entry = entry.clone();
+
+            if !check_access_level(new_entry.access_level, READ_WRITE) {
+                return Err(FileError::NoPermissionToWrite(new_entry.name.to_string()).into());
+            }
 
             if !dest_is_dir  {
                 new_entry.name = dest_name.clone().into();
@@ -89,10 +91,10 @@ impl DirEntryHandling for FileSystem {
         let mut dest_parent_block = self.traverse_dir(dest_parent)?;
 
         // check if we have write permission for destnation and read permission for source
-        if !check_access_level(src_parent_block.parent_entry.access_level?, READ) {
+        if !check_access_level(src_parent_block.parent_entry.access_level, READ) {
             return Err(FileError::NoPermissionToRead(dest_name).into());
         }
-        if !check_access_level(dest_parent_block.parent_entry.access_level?, WRITE) {
+        if !check_access_level(dest_parent_block.parent_entry.access_level, WRITE) {
             return Err(FileError::NoPermissionToWrite(dest_name).into());
         }
 
@@ -109,6 +111,10 @@ impl DirEntryHandling for FileSystem {
 
         if let Some(entry) = self.curr_block.get_entry(&src_name.into()) {
             let mut new_entry = entry.clone();
+
+            if !check_access_level(new_entry.access_level, READ_WRITE) {
+                return Err(FileError::NoPermissionToWrite(new_entry.name.to_string()).into());
+            }
 
             if !dest_is_dir {
                 new_entry.name = dest_name.clone().into();
