@@ -159,4 +159,13 @@ impl DirBlock {
             Err(FileError::FileNotFound.into())
         }
     }
+
+    pub fn update_entry(&mut self, entry: &DirEntry) -> Result<()> {
+        if let Some(index) = self.entries.iter().position(|item| item.name == entry.name) {
+            self.entries[index] = entry.clone();
+            Ok(())
+        } else {
+            Err(FileError::FileNotFound.into())
+        }
+    }
 }

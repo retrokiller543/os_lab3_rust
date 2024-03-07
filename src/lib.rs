@@ -18,7 +18,7 @@ pub fn setup_logger() -> Result<()> {
 
     let file = File::create(log_filename)?;
 
-    Builder::from_env(Env::default().default_filter_or("info"))
+    Builder::from_env(Env::default().default_filter_or("trace"))
         .format(|buf, record| {
             writeln!(
                 buf,

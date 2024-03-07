@@ -43,6 +43,7 @@ mod tests {
             file_type: FileType::File,
             size: 0,
             blk_num: 0,
+            access_level: 0
         };
 
         let serialized = bincode::serialize(&dir_entry).expect("Failed to serialize DirEntry");
@@ -117,6 +118,7 @@ mod tests {
                 file_type: FileType::File,
                 size: 20,
                 blk_num: i as u16,
+                access_level: 0
             };
             block.add_entry(entry).unwrap();
             let new_size = block.get_size();

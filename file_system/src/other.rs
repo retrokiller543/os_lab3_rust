@@ -137,14 +137,16 @@ impl Permissions for FileSystem {
             }
 
             entry.access_level = permissions;
+            parent_block.update_entry(entry)?;
             self.write_dir_block(&parent_block)?;
 
             if entry.file_type == FileType::Directory {
                 let mut block = self.read_dir_block(entry)?;
                 block.entries.iter_mut().for_each(|entry| entry.access_level = permissions);
                 self.write_dir_block(&block)?;
-                self.update_curr_dir()?;
             }
+
+            self.update_curr_dir()?;
         } else {
             return Err(FileError::FileNotFound.into());
         }
