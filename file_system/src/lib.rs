@@ -94,6 +94,7 @@ const WRITE_EXECUTE: u8 = WRITE | EXECUTE;
 const READ_WRITE_EXECUTE: u8 = READ | WRITE | EXECUTE;
 const NONE: u8 = 0x00;
 
+#[trace_log]
 fn get_access_rights(access: u8) -> String {
     match access {
         READ_WRITE_EXECUTE => "rwx".to_string(),
@@ -161,6 +162,7 @@ impl FileSystem {
         })
     }
 
+    #[trace_log]
     pub fn update_curr_dir(&mut self) -> Result<()> {
         self.curr_block = self.read_dir_block(&self.curr_block.parent_entry)?;
         Ok(())
@@ -302,7 +304,7 @@ impl FileSystem {
                         // Instead of reading, we write zeroes to the block
                         self.disk.write_raw_data(*blk_num as usize, &zero_data)?;
 
-                        let lol: usize = blk_num.clone() as usize;
+                        let lol: usize = blk_num.copy() as usize;
                         self.fat[lol] = FatType::Free;
                         self.disk.write_block(FAT_BLK as usize, &self.fat)?;
                         *blk_num = next_blk;
@@ -310,7 +312,7 @@ impl FileSystem {
                     Some(&FatType::EOF) => {
                         // Clear the EOF block as well
                         self.disk.write_raw_data(*blk_num as usize, &zero_data)?;
-                        let lol: usize = blk_num.clone() as usize;
+                        let lol: usize = blk_num.copy() as usize;
                         self.fat[lol] = FatType::Free;
                         self.disk.write_block(FAT_BLK as usize, &self.fat)?;
                         break;
@@ -327,7 +329,7 @@ impl FileSystem {
         Ok(())
     }
 
-    //#[trace_log]
+    #[trace_log]
     pub fn remove_dir_data(&mut self, dir_entry: &DirEntry, path: &str) -> Result<()> {
         let block: DirBlock = self.read_dir_block(dir_entry)?;
 
@@ -340,7 +342,7 @@ impl FileSystem {
 
             match entry.file_type {
                 FileType::File => self.delete_file(&new_path)?,
-                FileType::Directory => self.remove_dir_data(&entry, &new_path)?,
+                FileType::Directory => self.remove_dir_data(entry, &new_path)?,
             }
         }
 

@@ -10,6 +10,7 @@ use crate::{get_access_rights, FileSystem};
 
 impl Directory for FileSystem {
     /// Creates a directory in the current directory
+    #[trace_log]
     fn create_dir(&mut self, path: &str) -> Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
@@ -65,6 +66,7 @@ impl Directory for FileSystem {
         Ok(())
     }
 
+    #[trace_log]
     fn list_dir(&mut self) -> Result<()> {
         let mut table = Table::new();
         table.set_titles(row![

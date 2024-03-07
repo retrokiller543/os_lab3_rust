@@ -1,5 +1,6 @@
 use crate::dir_entry::{DirBlock, FileType};
 use anyhow::Result;
+use logger_macro::trace_log;
 
 use crate::errors::FileError;
 
@@ -10,6 +11,7 @@ use crate::{FileSystem, READ_WRITE_EXECUTE};
 
 impl DirEntryHandling for FileSystem {
     /// The move function is used to move a file from one directory to another
+    #[trace_log]
     fn move_entry(&mut self, source: &str, dest: &str) -> Result<()> {
         let abs_src = absolutize_from(source, &self.curr_block.path);
         let abs_dest = absolutize_from(dest, &self.curr_block.path);
@@ -64,6 +66,7 @@ impl DirEntryHandling for FileSystem {
     }
 
     /// The copy function is used to copy a file from one directory to another
+    #[trace_log]
     fn copy_entry(&mut self, source: &str, dest: &str) -> Result<()> {
         let abs_src = absolutize_from(source, &self.curr_block.path);
         let abs_dest = absolutize_from(dest, &self.curr_block.path);
@@ -124,11 +127,13 @@ impl DirEntryHandling for FileSystem {
     }
 }
 
+#[trace_log]
 fn convert_str_to_u8_digit(s: &str) -> Result<u8, std::num::ParseIntError> {
     s.parse::<u8>()
 }
 
 impl Permissions for FileSystem {
+    #[trace_log]
     fn change_permissions(&mut self, path: &str, permissions: &str) -> Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path);

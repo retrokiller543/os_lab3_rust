@@ -26,6 +26,7 @@ impl FileSystem {
     }
 
     #[cfg(not(target_arch = "wasm32"))]
+    #[trace_log]
     pub fn write_dir_block(&self, block: &DirBlock) -> anyhow::Result<()> {
         self.disk.write_block(block.blk_num as usize, block)?;
         Ok(())
@@ -37,6 +38,7 @@ impl FileSystem {
         Ok(())
     }
 
+    #[trace_log]
     pub fn update_dir(&mut self, block: &mut DirBlock, path: String) -> anyhow::Result<()> {
         let abs_path = path_handler::absolutize_from(&path, "/");
         let (parent, name) = path_handler::split_path(abs_path);
@@ -180,6 +182,7 @@ impl FileSystem {
         Ok(block)
     }
 
+    #[trace_log]
     pub fn get_all_dirs(&self, path: String) -> anyhow::Result<Vec<DirBlock>> {
         let names = path
             .split('/')
