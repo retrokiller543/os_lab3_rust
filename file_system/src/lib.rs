@@ -32,6 +32,7 @@ mod utils;
 
 use std::io;
 
+#[derive(Clone)]
 pub struct StdIOHandler;
 
 impl IOHandler for StdIOHandler {
@@ -60,12 +61,30 @@ impl Debug for StdIOHandler {
 const ROOT_BLK: u64 = 0;
 const FAT_BLK: u64 = 1;
 
+#[derive(Debug)]
 pub struct FileSystem {
     disk: Disk,
     curr_block: DirBlock,
     fat: FAT,
-    pub io_handler: Box<dyn IOHandler<Input=String, Output=String>>,
+    //#[cfg(not(target_arch = "wasm32"))]
+    pub io_handler: Box<dyn IOHandler<Input = String, Output = String>>
 }
+
+
+impl Clone for FileSystem {
+    fn clone(&self) -> Self {
+        FileSystem {
+            #[cfg(not(target_arch = "wasm32"))]
+            disk: Disk::new().unwrap(),
+            #[cfg(target_arch = "wasm32")]
+            disk: self.disk.clone(),
+            curr_block: self.curr_block.clone(),
+            fat: self.fat.clone(),
+            io_handler: self.io_handler.clone_box(),
+        }
+    }
+}
+
 
 const READ: u8 = 0x04;
 const WRITE: u8 = 0x02;

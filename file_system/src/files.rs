@@ -87,6 +87,8 @@ impl File for FileSystem {
             return Err(FileError::InvalidFilename(name.to_string()).into());
         }
 
+        // premissions
+
         let mut parent_block = self.traverse_dir(parent)?;
 
         // make code to check if file exists and parent exists

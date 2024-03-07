@@ -3,7 +3,7 @@ use leptos::*;
 use file_system::FileSystem;
 use file_system::prelude::*;
 use log::{debug, info};
-use crate::{MemIOHandler, read_all};
+use crate::{GlobalState, MemIOHandler, read_all};
 use crate::components::output::Output;
 use web_sys::HtmlInputElement;
 use leptos::ev::Event;
@@ -63,30 +63,33 @@ fn execute_command(command: &str, file_system: &mut FileSystem, terminal_output_
     }
 }
 
-fn handle_input(input: String, file_system: &mut FileSystem, terminal_output: ReadSignal<Vec<String>>, set_terminal_output: WriteSignal<Vec<String>>) {
+fn handle_input(input: String, file_system: &mut FileSystem, terminal_output: RwSignal<Vec<String>>) {
     execute_command(&input, file_system, move |output| {
         let current_output = terminal_output.get(); // Get current output
         debug!("current_output: {:?}", current_output);
-        let new_output = [current_output.as_slice(), output.as_slice()].concat(); // Create a new vector
-        debug!("new_output: {:?}", new_output);
         debug!("terminal_output: {:?}", terminal_output.get());
-        set_terminal_output(new_output); // Set the updated vector
+        terminal_output.update(|mut curr| {
+            curr.extend(output); // Update the current output
+        }); // Set the updated vector
         debug!("terminal_output: {:?}", terminal_output.get());
     });
 }
 
 #[component]
 pub fn Home() -> impl IntoView {
-    let (terminal_output, set_terminal_output) = create_signal(Vec::new());
     let file_system = Arc::new(Mutex::new(FileSystem::new(Box::new(MemIOHandler::new())).unwrap()));
     let (input_value, set_input_value) = create_signal(String::new()); // State for the user input
 
+    let state = expect_context::<RwSignal<GlobalState>>();
+
+    create_effect(move |_| {
+        // Log the current terminal output from global state
+        info!("Current terminal output: {:?}", state.get().terminal_output.get());
+    });
+
     let handle_command = {
-        let file_system = file_system.clone();
-        let terminal_output = terminal_output.clone();
-        let set_terminal_output = set_terminal_output.clone();
         move |command: String| {
-            handle_input(command, &mut file_system.lock().unwrap(), terminal_output.clone(), set_terminal_output.clone());
+            handle_input(command, &mut state.get().file_system.get(), state.get().terminal_output);
         }
     };
 
@@ -122,7 +125,7 @@ pub fn Home() -> impl IntoView {
                        placeholder="Enter command"/>
                 <button type="submit">{"Execute"}</button>
             </form>
-            <Output buffer={terminal_output.get()} />
+            <Output />
             </ErrorBoundary>
         </div>
     }

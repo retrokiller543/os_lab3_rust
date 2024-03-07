@@ -6,7 +6,7 @@ pub mod traits;
 use crate::errors::DiskError;
 use crate::traits::BlockStorage;
 use anyhow::Result;
-use bincode;
+//use bincode;
 #[cfg(not(target_arch = "wasm32"))]
 use log::error;
 #[cfg(feature = "debug")]
@@ -40,6 +40,8 @@ const DISKNAME: &str = "diskfile.bin";
 /// This struct encapsulates operations for interacting with a disk file, including
 /// creating a new disk, reading and writing to disk blocks, and deleting the disk file.
 /// It is designed to simulate block-level operations on a virtual disk file.
+#[derive(Debug)]
+#[cfg_attr(target_arch = "wasm32", derive(Clone))]
 pub struct Disk {
     /// The file handle for the disk file.
     #[cfg(not(target_arch = "wasm32"))]
