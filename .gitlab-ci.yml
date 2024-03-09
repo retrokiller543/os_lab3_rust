@@ -73,6 +73,5 @@ publish:
     - tags
   dependencies:
     - build:linux_x86_64
-    - build:macos_x86_64
     - build:windows_x86_64
     - build:linux_arm64_docker
