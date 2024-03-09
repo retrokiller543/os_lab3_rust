@@ -43,12 +43,14 @@ build:windows_x86_64:
     - choco install python --version=3.9 -y
     - choco install rust -y
     - choco install rustup.install -y
+    - $env:RUSTUP_TOOLCHAIN="nightly"
     - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
     - $env:Path += ";C:\ProgramData\chocolatey\lib\rust\tools\bin"
     - $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     - refreshenv
     - pip install maturin
     - rustup override set nightly
+    - cargo +nightly build --release
 
 build:linux_arm64_docker:
   <<: *build_template
