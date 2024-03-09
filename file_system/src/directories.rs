@@ -6,10 +6,13 @@ use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::FileError;
 use crate::traits::Directory;
 use crate::utils::path_handler::{absolutize_from, split_path};
+use crate::{FileSystem, get_access_rights, READ, WRITE};
+use crate::utils::check_access_level;
 use crate::{get_access_rights, FileSystem};
 
 impl Directory for FileSystem {
     /// Creates a directory in the current directory
+    #[trace_log]
     fn create_dir(&mut self, path: &str) -> Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
@@ -21,6 +24,9 @@ impl Directory for FileSystem {
         }
 
         let mut parent_block = self.traverse_dir(parent)?;
+        if !check_access_level(parent_block.parent_entry.access_level, WRITE) {
+            return Err(FileError::NoPermissionToWrite(name).into());
+        }
 
         match parent_block.get_entry(&name.clone().into()) {
             Some(entry) => {
@@ -50,6 +56,9 @@ impl Directory for FileSystem {
         let (parent, name) = split_path(abs_path.clone());
 
         let mut parent_block = self.traverse_dir(parent.clone())?;
+        if !check_access_level(parent_block.parent_entry.access_level, WRITE) {
+            return Err(FileError::NoPermissionToWrite(name).into());
+        }
         let binding = parent_block.clone();
         let entry = binding
             .get_entry(&name.into())
@@ -65,7 +74,14 @@ impl Directory for FileSystem {
         Ok(())
     }
 
+    #[trace_log]
     fn list_dir(&mut self) -> Result<()> {
+
+        // Check if we have read permission for the current directory
+        if !check_access_level(self.curr_block.parent_entry.access_level, READ) {
+            return Err(FileError::NoPermissionToRead(self.curr_block.path.clone()).into());
+        }
+
         let mut table = Table::new();
         table.set_titles(row![
             "Name".to_string(),

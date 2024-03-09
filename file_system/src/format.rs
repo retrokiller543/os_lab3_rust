@@ -1,4 +1,5 @@
 use anyhow::Result;
+use logger_macro::trace_log;
 
 use rustic_disk::traits::BlockStorage;
 use rustic_disk::Disk;
@@ -8,6 +9,7 @@ use crate::traits::Format;
 use crate::{FatType, FileSystem, FAT, FAT_BLK, ROOT_BLK};
 
 impl Format for FileSystem {
+    #[trace_log]
     fn format(&mut self) -> Result<()> {
         // disk should always exist since we handle making a dsk in the constructor
         if Disk::disk_exists() {

@@ -40,9 +40,22 @@ pub trait Permissions {
     fn change_permissions(&mut self, path: &str, permissions: &str) -> Result<()>;
 }
 
+pub trait IOHandlerClone {
+    fn clone_box(&self) -> Box<dyn IOHandler<Input = String, Output = String>>;
+}
+
+impl<T> IOHandlerClone for T
+where
+    T: 'static + IOHandler<Input = String, Output = String> + Clone,
+{
+    fn clone_box(&self) -> Box<dyn IOHandler<Input = String, Output = String>> {
+        Box::new(self.clone())
+    }
+}
+
 pub trait IOHandler
 where
-    Self: Debug,
+    Self: Debug + IOHandlerClone,
 {
     type Input;
     type Output;

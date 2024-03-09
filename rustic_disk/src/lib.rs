@@ -26,10 +26,12 @@ use std::io;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 
-#[cfg(target_arch = "wasm32")]
 use core::fmt::Debug;
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs::{File, OpenOptions};
+use logger_macro::trace_log;
+#[cfg(target_arch = "wasm32")]
+use core::fmt::Debug;
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::{Arc, Mutex};
 
@@ -135,7 +137,7 @@ impl Disk {
 
     #[cfg(target_arch = "wasm32")]
     pub fn disk_exists() -> bool {
-        true // disk will always exist in WASM since it's in memory
+        false // disk will always exist in WASM since it's in memory
     }
 
     /// Deletes the disk file from the filesystem.
@@ -203,6 +205,8 @@ impl BlockStorage for Disk {
     /// # disk.delete_disk()?;
     /// # Ok(())
     /// # }
+    /// ```
+    #[trace_log]
     fn read_block<T: DeserializeOwned + std::fmt::Debug>(
         &self,
         block_index: usize,
@@ -269,7 +273,9 @@ impl BlockStorage for Disk {
     /// # disk.delete_disk()?;
     /// # Ok(())
     /// # }
-    fn write_block<T: Serialize>(&self, block_index: usize, data: &T) -> Result<(), DiskError> {
+    /// ```
+    #[trace_log]
+    fn write_block<T: Serialize + Debug>(&self, block_index: usize, data: &T) -> Result<(), DiskError> {
         let serialized_data = bincode::serialize(data).map_err(DiskError::SerializationError)?;
         if serialized_data.len() > Self::BLOCK_SIZE {
             error!(
@@ -325,6 +331,8 @@ impl BlockStorage for Disk {
     /// # disk.delete_disk()?;
     /// # Ok(())
     /// # }
+    /// ```
+    #[trace_log]
     fn write_raw_data(&self, block_index: usize, data: &[u8]) -> Result<(), DiskError> {
         if data.len() > Self::BLOCK_SIZE {
             error!(
@@ -373,6 +381,8 @@ impl BlockStorage for Disk {
     /// # disk.delete_disk()?;
     /// # Ok(())
     /// # }
+    /// ```
+    #[trace_log]
     fn read_raw_data(&self, block_index: usize) -> Result<Vec<u8>, DiskError> {
         let file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
@@ -390,6 +400,7 @@ impl BlockStorage for Disk {
 
 #[cfg(target_arch = "wasm32")]
 impl BlockStorage for Disk {
+    #[trace_log]
     fn read_block<T: DeserializeOwned + Debug>(&self, block_index: usize) -> Result<T, DiskError> {
         let position = self.get_block_position(block_index)? as usize;
         let end = position + Self::BLOCK_SIZE;
@@ -403,7 +414,8 @@ impl BlockStorage for Disk {
         bincode::deserialize(data_slice).map_err(DiskError::DeserializationError)
     }
 
-    fn write_block<T: Serialize>(&mut self, block_index: usize, data: &T) -> Result<(), DiskError> {
+    #[trace_log]
+    fn write_block<T: Serialize + Debug>(&mut self, block_index: usize, data: &T) -> Result<(), DiskError> {
         let serialized_data = bincode::serialize(data).map_err(DiskError::SerializationError)?;
         if serialized_data.len() > Self::BLOCK_SIZE {
             return Err(DiskError::DataExceedsBlockSize);
@@ -420,6 +432,7 @@ impl BlockStorage for Disk {
         Ok(())
     }
 
+    #[trace_log]
     fn write_raw_data(&mut self, block_index: usize, data: &[u8]) -> Result<(), DiskError> {
         if data.len() > Self::BLOCK_SIZE {
             return Err(DiskError::DataExceedsBlockSize);
@@ -436,6 +449,7 @@ impl BlockStorage for Disk {
         Ok(())
     }
 
+    #[trace_log]
     fn read_raw_data(&self, block_index: usize) -> Result<Vec<u8>, DiskError> {
         let position = self.get_block_position(block_index)? as usize;
         let end = position + Self::BLOCK_SIZE;

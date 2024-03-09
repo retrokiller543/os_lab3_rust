@@ -136,6 +136,7 @@ impl DirBlock {
         self.entries.iter().find(|entry| entry.name == *name)
     }
 
+    //#[trace_log]
     pub fn get_entry_mut(&mut self, name: &FixedString) -> Option<&mut DirEntry> {
         self.entries
             .iter_mut()
@@ -164,6 +165,7 @@ impl DirBlock {
         }
     }
 
+    #[trace_log]
     pub fn update_entry(&mut self, entry: &DirEntry) -> Result<()> {
         if let Some(index) = self.entries.iter().position(|item| item.name == entry.name) {
             self.entries[index] = entry.clone();

@@ -1,15 +1,18 @@
 use crate::dir_entry::{DirBlock, FileType};
 use anyhow::Result;
+use logger_macro::trace_log;
 
 use crate::errors::FileError;
 
+use crate::{FileSystem, READ, READ_WRITE, READ_WRITE_EXECUTE, WRITE};
 use crate::prelude::Permissions;
+use crate::utils::check_access_level;
 use crate::traits::DirEntryHandling;
 use crate::utils::path_handler::{absolutize_from, split_path};
-use crate::{FileSystem, READ_WRITE_EXECUTE};
 
 impl DirEntryHandling for FileSystem {
     /// The move function is used to move a file from one directory to another
+    #[trace_log]
     fn move_entry(&mut self, source: &str, dest: &str) -> Result<()> {
         let abs_src = absolutize_from(source, &self.curr_block.path);
         let abs_dest = absolutize_from(dest, &self.curr_block.path);
@@ -19,6 +22,14 @@ impl DirEntryHandling for FileSystem {
 
         let mut src_parent_block = self.traverse_dir(src_parent)?;
         let mut dest_parent_block = self.traverse_dir(dest_parent)?;
+
+        // check if we have write permission for destnation and read permission for source
+        if !check_access_level(src_parent_block.parent_entry.access_level, READ) {
+            return Err(FileError::NoPermissionToRead(dest_name).into());
+        }
+        if !check_access_level(dest_parent_block.parent_entry.access_level, WRITE) {
+            return Err(FileError::NoPermissionToWrite(dest_name).into());
+        }
 
         let mut dest_is_dir = false;
 
@@ -33,6 +44,10 @@ impl DirEntryHandling for FileSystem {
 
         if let Some(entry) = src_parent_block.get_entry(&src_name.clone().into()) {
             let mut new_entry = entry.clone();
+
+            if !check_access_level(new_entry.access_level, READ_WRITE) {
+                return Err(FileError::NoPermissionToWrite(new_entry.name.to_string()).into());
+            }
 
             if !dest_is_dir {
                 new_entry.name = dest_name.clone().into();
@@ -64,6 +79,7 @@ impl DirEntryHandling for FileSystem {
     }
 
     /// The copy function is used to copy a file from one directory to another
+    #[trace_log]
     fn copy_entry(&mut self, source: &str, dest: &str) -> Result<()> {
         let abs_src = absolutize_from(source, &self.curr_block.path);
         let abs_dest = absolutize_from(dest, &self.curr_block.path);
@@ -73,6 +89,14 @@ impl DirEntryHandling for FileSystem {
 
         let src_parent_block = self.traverse_dir(src_parent)?;
         let mut dest_parent_block = self.traverse_dir(dest_parent)?;
+
+        // check if we have write permission for destnation and read permission for source
+        if !check_access_level(src_parent_block.parent_entry.access_level, READ) {
+            return Err(FileError::NoPermissionToRead(dest_name).into());
+        }
+        if !check_access_level(dest_parent_block.parent_entry.access_level, WRITE) {
+            return Err(FileError::NoPermissionToWrite(dest_name).into());
+        }
 
         let mut dest_is_dir = false;
 
@@ -87,6 +111,10 @@ impl DirEntryHandling for FileSystem {
 
         if let Some(entry) = self.curr_block.get_entry(&src_name.into()) {
             let mut new_entry = entry.clone();
+
+            if !check_access_level(new_entry.access_level, READ_WRITE) {
+                return Err(FileError::NoPermissionToWrite(new_entry.name.to_string()).into());
+            }
 
             if !dest_is_dir {
                 new_entry.name = dest_name.clone().into();
@@ -124,11 +152,13 @@ impl DirEntryHandling for FileSystem {
     }
 }
 
+#[trace_log]
 fn convert_str_to_u8_digit(s: &str) -> Result<u8, std::num::ParseIntError> {
     s.parse::<u8>()
 }
 
 impl Permissions for FileSystem {
+    #[trace_log]
     fn change_permissions(&mut self, path: &str, permissions: &str) -> Result<()> {
         let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path);

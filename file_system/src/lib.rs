@@ -36,6 +36,7 @@ mod utils;
 use pyo3::pyclass;
 use std::io;
 
+#[derive(Clone)]
 #[cfg_attr(feature = "py-bindings", pyclass)]
 pub struct StdIOHandler;
 
@@ -71,7 +72,22 @@ pub struct FileSystem {
     disk: Disk,
     curr_block: DirBlock,
     fat: FAT,
+    //#[cfg(not(target_arch = "wasm32"))]
     pub io_handler: Box<dyn IOHandler<Input = String, Output = String> + Send + Sync>,
+}
+
+impl Clone for FileSystem {
+    fn clone(&self) -> Self {
+        FileSystem {
+            #[cfg(not(target_arch = "wasm32"))]
+            disk: Disk::new().unwrap(),
+            #[cfg(target_arch = "wasm32")]
+            disk: self.disk.clone(),
+            curr_block: self.curr_block.clone(),
+            fat: self.fat.clone(),
+            io_handler: self.io_handler.clone_box(),
+        }
+    }
 }
 
 const READ: u8 = 0x04;
@@ -83,6 +99,7 @@ const WRITE_EXECUTE: u8 = WRITE | EXECUTE;
 const READ_WRITE_EXECUTE: u8 = READ | WRITE | EXECUTE;
 const NONE: u8 = 0x00;
 
+#[trace_log]
 fn get_access_rights(access: u8) -> String {
     match access {
         READ_WRITE_EXECUTE => "rwx".to_string(),
@@ -122,6 +139,7 @@ impl FileSystem {
                 parent_entry: DirEntry {
                     name: "/".into(),
                     file_type: FileType::Directory,
+                    access_level: READ_WRITE_EXECUTE,
                     ..Default::default()
                 },
                 blk_num: 0,
@@ -134,6 +152,8 @@ impl FileSystem {
             let disk = Disk::new()?;
             let mut root_block: DirBlock = disk.read_block(0)?;
             root_block.parent_entry.file_type = FileType::Directory;
+            root_block.parent_entry.access_level = READ_WRITE_EXECUTE;
+            root_block.parent_entry.name = "/".into();
             let fat: FAT = disk.read_block(1)?;
             (root_block, fat, disk)
         };
@@ -152,6 +172,7 @@ impl FileSystem {
         })
     }
 
+    #[trace_log]
     pub fn update_curr_dir(&mut self) -> Result<()> {
         self.curr_block = self.read_dir_block(&self.curr_block.parent_entry)?;
         Ok(())
@@ -318,7 +339,7 @@ impl FileSystem {
         Ok(())
     }
 
-    //#[trace_log]
+    #[trace_log]
     pub fn remove_dir_data(&mut self, dir_entry: &DirEntry, path: &str) -> Result<()> {
         let block: DirBlock = self.read_dir_block(dir_entry)?;
 

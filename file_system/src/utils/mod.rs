@@ -13,6 +13,10 @@ pub mod dirs;
 pub mod fixed_str;
 pub(crate) mod path_handler;
 
+pub fn check_access_level(access_level: u8, required: u8) -> bool {
+    (access_level & required) == required
+}
+
 impl FileSystem {
     /// The remove functon is used to delete a file from the current directory
     #[trace_log]
