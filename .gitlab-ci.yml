@@ -41,6 +41,7 @@ build:windows_x86_64:
   before_script:
     - choco install python --version=3.9 -y
     - choco install rust -y
+    - choco install rustup.install -y
     - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
     - $env:Path += ";C:\ProgramData\chocolatey\lib\rust\tools\bin"
     - $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
