@@ -1,14 +1,12 @@
 use anyhow::Result;
 use std::fmt::Debug;
 
-
-
 pub trait Format {
     fn format(&mut self) -> Result<()>;
 }
 
 pub trait InputConstructor {
-    fn new(io: Box<dyn IOHandler<Input=String, Output=String>>) -> Self;
+    fn new(io: Box<dyn IOHandler<Input = String, Output = String>>) -> Self;
 }
 
 pub trait Input {
@@ -42,7 +40,10 @@ pub trait Permissions {
     fn change_permissions(&mut self, path: &str, permissions: &str) -> Result<()>;
 }
 
-pub trait IOHandler where Self: Debug {
+pub trait IOHandler
+where
+    Self: Debug,
+{
     type Input;
     type Output;
 

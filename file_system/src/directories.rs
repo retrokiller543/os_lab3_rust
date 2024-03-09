@@ -1,12 +1,12 @@
 use anyhow::Result;
 use logger_macro::trace_log;
-use prettytable::{Table, row, format};
+use prettytable::{format, row, Table};
 
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::errors::FileError;
 use crate::traits::Directory;
 use crate::utils::path_handler::{absolutize_from, split_path};
-use crate::{FileSystem, get_access_rights};
+use crate::{get_access_rights, FileSystem};
 
 impl Directory for FileSystem {
     /// Creates a directory in the current directory
@@ -51,7 +51,9 @@ impl Directory for FileSystem {
 
         let mut parent_block = self.traverse_dir(parent.clone())?;
         let binding = parent_block.clone();
-        let entry = binding.get_entry(&name.into()).ok_or(FileError::FileNotFound)?;
+        let entry = binding
+            .get_entry(&name.into())
+            .ok_or(FileError::FileNotFound)?;
 
         if entry.file_type != FileType::Directory {
             return Err(FileError::NotADirectory(path.into()).into());
@@ -72,7 +74,7 @@ impl Directory for FileSystem {
             "Block Number".to_string(),
             "Access Rights".to_string(),
         ]);
-    
+
         // Print each entry with dynamic column widths and explicit padding
         for entry in &self.curr_block.entries {
             if !entry.name.is_empty() {
@@ -94,7 +96,7 @@ impl Directory for FileSystem {
         table.set_format(*format::consts::FORMAT_NO_LINESEP_WITH_TITLE);
 
         self.io_handler.write(table.to_string())?;
-    
+
         Ok(())
     }
 }

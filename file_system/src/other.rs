@@ -1,12 +1,12 @@
-use anyhow::Result;
 use crate::dir_entry::{DirBlock, FileType};
+use anyhow::Result;
 
 use crate::errors::FileError;
 
-use crate::traits::DirEntryHandling;
-use crate::{FileSystem, READ_WRITE_EXECUTE};
 use crate::prelude::Permissions;
+use crate::traits::DirEntryHandling;
 use crate::utils::path_handler::{absolutize_from, split_path};
+use crate::{FileSystem, READ_WRITE_EXECUTE};
 
 impl DirEntryHandling for FileSystem {
     /// The move function is used to move a file from one directory to another
@@ -34,11 +34,14 @@ impl DirEntryHandling for FileSystem {
         if let Some(entry) = src_parent_block.get_entry(&src_name.clone().into()) {
             let mut new_entry = entry.clone();
 
-            if !dest_is_dir  {
+            if !dest_is_dir {
                 new_entry.name = dest_name.clone().into();
             }
 
-            if dest_parent_block.get_entry(&dest_name.clone().into()).is_some() {
+            if dest_parent_block
+                .get_entry(&dest_name.clone().into())
+                .is_some()
+            {
                 return Err(FileError::FileExists(dest_name.into()).into());
             }
 
@@ -85,11 +88,14 @@ impl DirEntryHandling for FileSystem {
         if let Some(entry) = self.curr_block.get_entry(&src_name.into()) {
             let mut new_entry = entry.clone();
 
-            if !dest_is_dir  {
+            if !dest_is_dir {
                 new_entry.name = dest_name.clone().into();
             }
 
-            if dest_parent_block.get_entry(&dest_name.clone().into()).is_some() {
+            if dest_parent_block
+                .get_entry(&dest_name.clone().into())
+                .is_some()
+            {
                 return Err(FileError::FileExists(dest_name.into()).into());
             }
 
@@ -142,7 +148,10 @@ impl Permissions for FileSystem {
 
             if entry.file_type == FileType::Directory {
                 let mut block = self.read_dir_block(entry)?;
-                block.entries.iter_mut().for_each(|entry| entry.access_level = permissions);
+                block
+                    .entries
+                    .iter_mut()
+                    .for_each(|entry| entry.access_level = permissions);
                 self.write_dir_block(&block)?;
             }
 

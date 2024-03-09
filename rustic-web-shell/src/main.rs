@@ -1,8 +1,8 @@
+use chrono::Local;
+use env_logger::{Builder, Env};
 use leptos::*;
 use log::info;
 use rustic_web_shell::App;
-use chrono::Local;
-use env_logger::{Builder, Env};
 use std::io::Write;
 
 pub fn setup_logger() -> anyhow::Result<()> {

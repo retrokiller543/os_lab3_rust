@@ -40,9 +40,15 @@ fn test_cat() -> anyhow::Result<()> {
 fn test_long_name() -> anyhow::Result<()> {
     let mut fs = FileSystem::new(Box::new(StdIOHandler))?;
     fs.format()?;
-    let t4 = fs.create_file_with_content("AbcdefghijAbcdefghijAbcdefghijAbcdefghijAbcdefghijAbcde", "Hello, World!");
+    let t4 = fs.create_file_with_content(
+        "AbcdefghijAbcdefghijAbcdefghijAbcdefghijAbcdefghijAbcde",
+        "Hello, World!",
+    );
     assert!(t4.is_ok());
-    let t41 = fs.create_file_with_content("AbcdefghijAbcddefghijAbcdefghijAbcdefghijAbcdefghijAbcde", "Hello, World!");
+    let t41 = fs.create_file_with_content(
+        "AbcdefghijAbcddefghijAbcdefghijAbcdefghijAbcdefghijAbcde",
+        "Hello, World!",
+    );
     assert!(t41.is_err());
     fs.disk.delete_disk()?;
     Ok(())

@@ -26,15 +26,15 @@ mod files;
 mod format;
 mod other;
 pub mod prelude;
+#[cfg(feature = "py-bindings")]
+mod py_bindings;
 mod tests;
 mod traits;
 mod utils;
-#[cfg(feature = "py-bindings")]
-mod py_bindings;
 
-use std::io;
 #[cfg(feature = "py-bindings")]
 use pyo3::pyclass;
+use std::io;
 
 #[cfg_attr(feature = "py-bindings", pyclass)]
 pub struct StdIOHandler;
@@ -45,7 +45,8 @@ impl IOHandler for StdIOHandler {
 
     fn read(&mut self) -> Result<String> {
         let mut input = String::new();
-        io::stdin().read_line(&mut input)
+        io::stdin()
+            .read_line(&mut input)
             .map_err(|e| IOHandlerError::IOError(e.to_string()).into()) // Convert to anyhow::Error
             .map(|_| input.trim_end().to_string())
     }
@@ -70,7 +71,7 @@ pub struct FileSystem {
     disk: Disk,
     curr_block: DirBlock,
     fat: FAT,
-    pub io_handler: Box<dyn IOHandler<Input=String, Output=String> + Send + Sync>,
+    pub io_handler: Box<dyn IOHandler<Input = String, Output = String> + Send + Sync>,
 }
 
 const READ: u8 = 0x04;
@@ -102,7 +103,9 @@ impl FileSystem {
     }
 
     #[trace_log]
-    pub fn new(io_handler: Box<dyn IOHandler<Input = String, Output = String>  + Send + Sync>) -> Result<Self> {
+    pub fn new(
+        io_handler: Box<dyn IOHandler<Input = String, Output = String> + Send + Sync>,
+    ) -> Result<Self> {
         #[cfg(feature = "debug")]
         {
             debug!("Creating new file system");
@@ -333,7 +336,8 @@ impl FileSystem {
         }
 
         let zero_data = vec![0u8; Disk::BLOCK_SIZE];
-        self.disk.write_raw_data(dir_entry.blk_num as usize, &zero_data)?;
+        self.disk
+            .write_raw_data(dir_entry.blk_num as usize, &zero_data)?;
 
         self.fat[dir_entry.blk_num as usize] = FatType::Free;
         self.disk.write_block(FAT_BLK as usize, &self.fat)?;

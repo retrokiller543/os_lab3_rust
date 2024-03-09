@@ -6,8 +6,8 @@ use logger_macro::trace_log;
 use crate::dir_entry::FileType;
 use crate::errors::FileError;
 use crate::prelude::{Directory, File};
-use crate::FileSystem;
 use crate::utils::path_handler::absolutize_from;
+use crate::FileSystem;
 
 pub mod dirs;
 pub mod fixed_str;

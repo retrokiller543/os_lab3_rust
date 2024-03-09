@@ -11,13 +11,13 @@ use bincode;
 use log::error;
 #[cfg(feature = "debug")]
 use log::{debug, trace};
+#[cfg(feature = "py-bindings")]
+use pyo3::prelude::*;
 use serde::{de::DeserializeOwned, Serialize};
 #[cfg(not(target_arch = "wasm32"))]
 use std::fs;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::{Read, Seek, SeekFrom, Write};
-#[cfg(feature = "py-bindings")]
-use pyo3::prelude::*;
 
 // Required imports for WASM
 //#[cfg(target_arch = "wasm32")]
@@ -27,10 +27,10 @@ use std::io;
 #[cfg(not(target_arch = "wasm32"))]
 use std::path::Path;
 
-#[cfg(not(target_arch = "wasm32"))]
-use std::fs::{File, OpenOptions};
 #[cfg(target_arch = "wasm32")]
 use core::fmt::Debug;
+#[cfg(not(target_arch = "wasm32"))]
+use std::fs::{File, OpenOptions};
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::{Arc, Mutex};
 
@@ -50,7 +50,7 @@ pub struct Disk {
     #[cfg(not(target_arch = "wasm32"))]
     diskfile: Arc<Mutex<File>>,
     #[cfg(target_arch = "wasm32")]
-    storage: Vec<u8>
+    storage: Vec<u8>,
 }
 
 impl Disk {
@@ -210,11 +210,15 @@ impl BlockStorage for Disk {
     ) -> Result<T, DiskError> {
         let file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
-        let mut file_lock = file.lock().map_err(|e | DiskError::FileLockError(e.into()))?;
-        file_lock.seek(SeekFrom::Start(position))
+        let mut file_lock = file
+            .lock()
+            .map_err(|e| DiskError::FileLockError(e.into()))?;
+        file_lock
+            .seek(SeekFrom::Start(position))
             .map_err(DiskError::SeekError)?;
         let mut buffer = vec![0u8; Self::BLOCK_SIZE];
-        file_lock.read_exact(&mut buffer)
+        file_lock
+            .read_exact(&mut buffer)
             .map_err(DiskError::ReadDiskError)?;
         let data = bincode::deserialize(&buffer).map_err(DiskError::DeserializationError)?;
         #[cfg(feature = "debug")]
@@ -278,7 +282,9 @@ impl BlockStorage for Disk {
         }
         let file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
-        let mut file = file.lock().map_err(|e | DiskError::FileLockError(e.into()))?;
+        let mut file = file
+            .lock()
+            .map_err(|e| DiskError::FileLockError(e.into()))?;
         file.seek(SeekFrom::Start(position))
             .map_err(DiskError::SeekError)?;
         file.write_all(&serialized_data)
@@ -331,7 +337,9 @@ impl BlockStorage for Disk {
         }
         let file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
-        let mut file = file.lock().map_err(|e | DiskError::FileLockError(e.into()))?;
+        let mut file = file
+            .lock()
+            .map_err(|e| DiskError::FileLockError(e.into()))?;
         file.seek(SeekFrom::Start(position))
             .map_err(DiskError::SeekError)?;
         file.write_all(data).map_err(DiskError::WriteDiskError)?;
@@ -369,7 +377,9 @@ impl BlockStorage for Disk {
     fn read_raw_data(&self, block_index: usize) -> Result<Vec<u8>, DiskError> {
         let file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
-        let mut file = file.lock().map_err(|e | DiskError::FileLockError(e.into()))?;
+        let mut file = file
+            .lock()
+            .map_err(|e| DiskError::FileLockError(e.into()))?;
         file.seek(SeekFrom::Start(position))
             .map_err(DiskError::SeekError)?;
         let mut buffer = vec![0u8; Self::BLOCK_SIZE];
