@@ -20,6 +20,7 @@ variables:
       if [[ "$CI_JOB_NAME" != *"windows"* ]]; then
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source $HOME/.cargo/env
+        rustup default nightly
       fi
 
 .build_template: &build_template
@@ -38,11 +39,6 @@ build:linux_x86_64:
   tags:
     - saas-linux-small-amd64
 
-build:macos_x86_64:
-  <<: *build_template
-  tags:
-    - saas-macos-medium-m1
-
 build:windows_x86_64:
   <<: *build_template
   tags:
@@ -52,7 +48,11 @@ build:windows_x86_64:
     - refreshenv
     - python -m pip install --upgrade pip
     - pip install maturin
-    - echo "Rust installation not required for Windows in this setup"
+    - winget install Microsoft.VisualStudio.2022.Community --silent --override "--wait --quiet --add ProductLang En-us --add Microsoft.VisualStudio.Workload.NativeDesktop --includeRecommended"
+    - shutdown -r
+    - winget install Rustlang.Rustup
+    - refreshenv
+    - rustup default nightly
 
 build:linux_arm64_docker:
   <<: *build_template
