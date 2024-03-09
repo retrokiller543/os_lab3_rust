@@ -331,7 +331,7 @@ impl FileSystem {
 
             match entry.file_type {
                 FileType::File => self.delete_file(&new_path)?,
-                FileType::Directory => self.remove_dir_data(&entry, &new_path)?,
+                FileType::Directory => self.remove_dir_data(entry, &new_path)?,
             }
         }
 

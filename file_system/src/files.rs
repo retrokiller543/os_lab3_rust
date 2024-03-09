@@ -148,7 +148,7 @@ impl File for FileSystem {
 
     #[trace_log]
     fn delete_file(&mut self, path: &str) -> anyhow::Result<()> {
-        let abs_path = absolutize_from(&path, &self.curr_block.path);
+        let abs_path = absolutize_from(path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
 
         let mut parent_block = self.traverse_dir(parent.clone())?;

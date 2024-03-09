@@ -6,7 +6,6 @@ pub mod traits;
 use crate::errors::DiskError;
 use crate::traits::BlockStorage;
 use anyhow::Result;
-use bincode;
 #[cfg(not(target_arch = "wasm32"))]
 use log::error;
 #[cfg(feature = "debug")]
