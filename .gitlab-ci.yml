@@ -39,7 +39,8 @@ build:windows_x86_64:
   tags:
     - saas-windows-medium-amd64
   before_script:
-    - choco install python --version=3.9 rust -y
+    - choco install python --version=3.9 -y
+    - choco install rust -y
     - refreshenv
     - rustup default nightly
     - pip install maturin
