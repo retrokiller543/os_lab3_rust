@@ -190,7 +190,6 @@ impl File for FileSystem {
             return Err(FileError::NoPermissionToRead(name).into());
         }
 
-
         #[cfg(feature = "debug")]
         {
             debug!("Path: {}", &path);
@@ -217,6 +216,10 @@ impl File for FileSystem {
         // make sure it's of type file
         if file_entry.file_type != FileType::File {
             return Err(FileError::FileIsDirectory.into());
+        }
+
+        if !check_access_level(file_entry.access_level, READ) {
+            return Err(FileError::NoPermissionToRead(name).into());
         }
 
         // recursivly check the fat until we reach EOF and read all blocks in order

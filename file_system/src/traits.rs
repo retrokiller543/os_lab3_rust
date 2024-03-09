@@ -41,14 +41,14 @@ pub trait Permissions {
 }
 
 pub trait IOHandlerClone {
-    fn clone_box(&self) -> Box<dyn IOHandler<Input = String, Output = String>>;
+    fn clone_box(&self) -> Box<dyn IOHandler<Input = String, Output = String> + Send + Sync>;
 }
 
 impl<T> IOHandlerClone for T
 where
-    T: 'static + IOHandler<Input = String, Output = String> + Clone,
+    T: 'static + IOHandler<Input = String, Output = String> + Clone + Send + Sync,
 {
-    fn clone_box(&self) -> Box<dyn IOHandler<Input = String, Output = String>> {
+    fn clone_box(&self) -> Box<dyn IOHandler<Input = String, Output = String> + Send + Sync> {
         Box::new(self.clone())
     }
 }

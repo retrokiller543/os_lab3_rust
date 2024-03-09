@@ -8,7 +8,6 @@ use crate::traits::Directory;
 use crate::utils::path_handler::{absolutize_from, split_path};
 use crate::{FileSystem, get_access_rights, READ, WRITE};
 use crate::utils::check_access_level;
-use crate::{get_access_rights, FileSystem};
 
 impl Directory for FileSystem {
     /// Creates a directory in the current directory
