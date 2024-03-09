@@ -14,7 +14,8 @@ variables:
       fi
     - python3 -m venv venv
     - source venv/bin/activate
-    - cargo install maturin
+    - rustup default nightly
+    - pip install maturin
 
 .build_template: &build_template
   stage: build
@@ -39,8 +40,9 @@ build:windows_x86_64:
     - saas-windows-medium-amd64
   before_script:
     - choco install python --version=3.9 -y
-    - cargo install maturin
+    - choco install rust -y
     - rustup default nightly
+    - pip install maturin
 
 build:linux_arm64_docker:
   <<: *build_template
