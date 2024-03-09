@@ -50,7 +50,6 @@ build:windows_x86_64:
     - refreshenv
     - pip install maturin
     - rustup override set nightly
-    - cargo +nightly build --release
 
 build:linux_arm64_docker:
   <<: *build_template
