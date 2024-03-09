@@ -14,6 +14,7 @@
       <sourceFolder url="file://$MODULE_DIR$/logger_macro/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/wasm_os_server/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rustic-web-shell/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/.idea/copilot/chatSessions" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
