@@ -14,8 +14,8 @@ variables:
       fi
     - python3 -m venv venv
     - source venv/bin/activate
-    - rustup default nightly
     - pip install maturin
+    - rustup default nightly
 
 .build_template: &build_template
   stage: build
@@ -24,6 +24,7 @@ variables:
   <<: *before_script_base
   script:
     - cd file_system
+    - rustup default nightly
     - maturin build --release --out dist
   artifacts:
     paths:
@@ -46,8 +47,8 @@ build:windows_x86_64:
     - $env:Path += ";C:\ProgramData\chocolatey\lib\rust\tools\bin"
     - $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
     - refreshenv
-    - rustup default nightly
     - pip install maturin
+    - rustup override set nightly
 
 build:linux_arm64_docker:
   <<: *build_template
