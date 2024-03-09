@@ -13,34 +13,33 @@ variables:
     - pip install maturin
     - cd file_system
   script:
-    - maturin build --release --out dist --target $TARGET
+    - maturin build --release --out dist
   artifacts:
     paths:
       - dist/*
 
 build:linux_x86_64:
   <<: *build_template
-  variables:
-    TARGET: x86_64-unknown-linux-gnu
   tags:
-    - linux
-    - x86_64
+    - saas-linux-small-amd64
 
 build:macos_x86_64:
   <<: *build_template
   variables:
     TARGET: x86_64-apple-darwin
   tags:
-    - macos
-    - x86_64
+    - saas-macos-medium-m1
 
 build:windows_x86_64:
   <<: *build_template
-  variables:
-    TARGET: x86_64-pc-windows-msvc
   tags:
-    - windows
-    - x86_64
+    - saas-windows-medium-amd64
+
+build:linux_arm64_docker:
+  <<: *build_template
+  tags:
+    - home-lab
+    - arm64
 
 publish:
   stage: publish
@@ -54,3 +53,4 @@ publish:
     - build:linux_x86_64
     - build:macos_x86_64
     - build:windows_x86_64
+    - build:linux_arm64_docker
