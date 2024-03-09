@@ -42,6 +42,7 @@ build:windows_x86_64:
     - choco install python --version=3.9 -y
     - choco install rust -y
     - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
+    - $env:Path += ";C:\ProgramData\chocolatey\lib\rust\tools\bin" # Add this line to update the PATH
     - rustup default nightly
     - pip install maturin
 
