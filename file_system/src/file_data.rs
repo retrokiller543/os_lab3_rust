@@ -3,6 +3,7 @@ use std::ops::Add;
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[cfg_attr(feature = "py-bindings", pyo3::pyclass)]
 pub struct FileData {
     pub(crate) data: Vec<u8>,
 }

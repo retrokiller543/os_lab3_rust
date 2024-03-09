@@ -12,6 +12,8 @@ pub enum FSError {
     NoFreeBlocks,
     #[error("Error reading block")]
     InvalidBlockReference,
+    #[error("Python error: {0}")]
+    PyError(String),
 }
 
 #[derive(Error, Debug)]
@@ -40,11 +42,15 @@ pub enum FileError {
     NoPermissionToRead(String),
     #[error("No premission to execute file: {0}")]
     NoPermissionToExecute(String),
+    #[error("Python error: {0}")]
+    PyError(String),
 }
 
 #[derive(Error, Debug)]
 pub enum IOHandlerError {
     #[error("Input/Output error: {0}")]
     IOError(String),
+    #[error("Python error: {0}")]
+    PyError(String),
     // You can add more specific error types here as needed
 }

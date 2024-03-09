@@ -6,7 +6,7 @@ use rustic_disk::Disk;
 
 use crate::dir_entry::{DirBlock, DirEntry, FileType};
 use crate::traits::Format;
-use crate::{FatType, FileSystem, FAT, FAT_BLK, ROOT_BLK};
+use crate::{FatType, FileSystem, FAT, FAT_BLK, ROOT_BLK, READ_WRITE_EXECUTE};
 
 impl Format for FileSystem {
     #[trace_log]
@@ -23,6 +23,7 @@ impl Format for FileSystem {
             parent_entry: DirEntry {
                 name: "/".into(),
                 file_type: FileType::Directory,
+                access_level: READ_WRITE_EXECUTE,
                 ..Default::default()
             },
             blk_num: 0,

@@ -33,9 +33,20 @@ mod traits;
 mod utils;
 
 #[cfg(feature = "py-bindings")]
-use pyo3::pyclass;
+use pyo3::prelude::*;
 use std::io;
 
+/// The `StdIOHandler` struct is a standard input/output handler.
+///
+/// It implements the `IOHandler` trait, which requires an `Input`
+/// associated type and an `Output` associated type, both of which are `String` in this case.
+/// The `IOHandler` trait also requires the implementation of two methods: `read` and `write`.
+/// The `read` method reads input from the user and returns a `Result<String>`.
+/// The `write` method takes a `String` as input and writes it as output, returning a `Result<()>`.
+///
+/// The `StdIOHandler` struct also implements the `Debug` trait,
+/// which requires the implementation of the `fmt` method.
+/// The `fmt` method formats the struct for output, returning a `std::fmt::Result`.
 #[derive(Clone)]
 #[cfg_attr(feature = "py-bindings", pyclass)]
 pub struct StdIOHandler;
@@ -44,6 +55,12 @@ impl IOHandler for StdIOHandler {
     type Input = String;
     type Output = String;
 
+    /// Reads input from the user.
+    ///
+    /// This method reads a line from the standard input,
+    /// trims the trailing newline character, and returns the input as a `Result<String>`.
+    /// If an error occurs during reading,
+    /// it is converted to an `IOHandlerError::IOError` and then to an `anyhow::Error`.
     fn read(&mut self) -> Result<String> {
         let mut input = String::new();
         io::stdin()
@@ -52,6 +69,10 @@ impl IOHandler for StdIOHandler {
             .map(|_| input.trim_end().to_string())
     }
 
+    /// Writes output to the user.
+    ///
+    /// This method takes a `String` as input and writes it to the standard output,
+    /// returning a `Result<()>`.
     fn write(&mut self, content: String) -> Result<()> {
         println!("{}", content);
         Ok(())
@@ -59,6 +80,9 @@ impl IOHandler for StdIOHandler {
 }
 
 impl Debug for StdIOHandler {
+    /// Formats the `StdIOHandler` struct for output.
+    ///
+    /// This method writes "StdIOHandler" to the provided formatter and returns a `std::fmt::Result`.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "StdIOHandler")
     }
@@ -67,12 +91,45 @@ impl Debug for StdIOHandler {
 const ROOT_BLK: u64 = 0;
 const FAT_BLK: u64 = 1;
 
+/// The `FileSystem` struct represents a file system.
+///
+/// ## Fields
+///
+/// * `disk`: A `Disk` object representing the disk on which the file system is stored.
+///
+/// * `curr_block`: A `DirBlock`
+/// object representing the current directory block that the file system is interacting with.
+/// * `fat`: A `FAT` object representing the File Allocation Table of the file system.
+///
+/// * `io_handler`: A boxed dynamic `IOHandler` trait object.
+/// This is used for handling input and output operations in the file system.
+///   The `IOHandler` trait requires an `Input` associated type and an `Output` associated type,
+/// both of which are `String` in this case.
+///   The `IOHandler` trait also requires the implementation of two methods: `read` and `write`.
+///   The `read` method reads input from the user and returns a `Result<String>`.
+///   The `write` method takes a `String` as input and writes it as output, returning a `Result<()>`.
+///   The `IOHandler` trait object is also required to be both `Send`
+/// and `Sync`, allowing it to be safely shared across threads.
+///
+/// ## Example with `StdIOHandler`
+///
+/// The following example demonstrates how to create a new `FileSystem`
+/// object using the `StdIOHandler` as the `IOHandler` trait object.
+///
+/// ```rust
+/// # use anyhow::Result;
+/// # use file_system::prelude::*;
+/// # fn main() -> Result<()> {
+/// let mut fs = FileSystem::new(Box::new(StdIOHandler))?;
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Debug)]
+#[cfg_attr(feature = "py-bindings", pyclass)]
 pub struct FileSystem {
     disk: Disk,
     curr_block: DirBlock,
     fat: FAT,
-    //#[cfg(not(target_arch = "wasm32"))]
     pub io_handler: Box<dyn IOHandler<Input = String, Output = String> + Send + Sync>,
 }
 
@@ -119,6 +176,34 @@ impl FileSystem {
         Disk::BLOCK_SIZE / DirEntry::calculate_max_size()
     }
 
+    /// Creates a new `FileSystem` object.
+    ///
+    /// This method takes a boxed dynamic `IOHandler` trait object as input and returns a `Result<Self>`.
+    /// The `IOHandler` trait requires an `Input` associated type and an `Output` associated type,
+    /// both of which are `String` in this case.
+    /// The `IOHandler` trait also requires the implementation of two methods: `read` and `write`.
+    /// The `read` method reads input from the user and returns a `Result<String>`.
+    /// The `write` method takes a `String` as input and writes it as output, returning a `Result<()>`.
+    /// The `IOHandler` trait object is also required to be both `Send`
+    /// and `Sync`, allowing it to be safely shared across threads.
+    ///
+    ///
+    /// # Arguments
+    ///
+    /// * `io_handler: Box<dyn IOHandler<Input = String, Output = String> + Send + Sync>`
+    ///     - A boxed dynamic `IOHandler` trait object.
+    ///
+    /// # Returns
+    ///
+    /// A `Result<Self>` containing the new `FileSystem` object.
+    ///
+    /// The `new` method first checks if a disk exists.
+    /// If not, it creates a new disk, a new `FAT` object, and a new root directory block.
+    /// It then writes the root directory block and the `FAT` object to the disk.
+    /// If a disk does exist, it reads the root directory block and the `FAT` object from the disk.
+    /// Finally, it creates a new `FileSystem` object with the disk,
+    /// the root directory block, the `FAT` object, and the `IOHandler` trait object,
+    /// and returns it.
     #[trace_log]
     pub fn new(
         io_handler: Box<dyn IOHandler<Input = String, Output = String> + Send + Sync>,
@@ -172,12 +257,22 @@ impl FileSystem {
         })
     }
 
+    /// Updates the current directory block of the file system.
+    ///
+    /// This method reads the directory block of the parent entry of the current directory block
+    /// and sets it as the new current directory block.
+    /// It returns a `Result<()>` indicating the success or failure of the operation.
     #[trace_log]
     pub fn update_curr_dir(&mut self) -> Result<()> {
         self.curr_block = self.read_dir_block(&self.curr_block.parent_entry)?;
         Ok(())
     }
 
+    /// Writes the current directory block to the disk.
+    ///
+    /// This method is only available when the target architecture is not `wasm32`.
+    /// It writes the current directory block to the disk at the block number of the current directory block.
+    /// It returns a `Result<()>` indicating the success or failure of the operation.
     #[trace_log]
     #[cfg(not(target_arch = "wasm32"))]
     pub fn write_curr_blk(&self) -> Result<()> {
@@ -187,6 +282,11 @@ impl FileSystem {
         Ok(())
     }
 
+    /// Writes the current directory block to the disk.
+    ///
+    /// This method is only available when the target architecture is `wasm32`.
+    /// It writes the current directory block to the disk at the block number of the current directory block.
+    /// It returns a `Result<()>` indicating the success or failure of the operation.
     #[cfg(target_arch = "wasm32")]
     pub fn write_curr_blk(&mut self) -> Result<()> {
         let block_to_write = self.curr_block.blk_num;
@@ -195,6 +295,14 @@ impl FileSystem {
         Ok(())
     }
 
+    /// Returns the block number of the first free block in the file allocation table (FAT).
+    ///
+    /// This method iterates over the FAT
+    /// and returns the block number of the first free block it encounters.
+    /// If no free blocks are found, it returns an `FSError::NoFreeBlocks` error.
+    ///
+    /// # Errors
+    /// Returns `FSError::NoFreeBlocks` if no free blocks are found in the FAT.
     #[trace_log]
     pub fn get_free_block(&self) -> Result<u16> {
         let mut blk = 0;
@@ -216,6 +324,25 @@ impl FileSystem {
         Ok(blk)
     }
 
+    /// Writes the serialized form of the given data to the disk, starting at the specified block.
+    ///
+    /// This method first serializes the given data.
+    /// If the serialized data fits within a single block, it writes it directly to the disk.
+    /// If the serialized data is larger than a single block,
+    /// it splits the data into chunks and writes each chunk to a separate block.
+    /// It updates the FAT for each block it writes to.
+    /// If a block is the last block of the data, it updates the FAT for that block to EOF.
+    /// If a block is not the last block,
+    /// it gets a new free block and updates the FAT for the current block to point to the new block.
+    ///
+    /// # Arguments
+    /// * `data: &T where T: Serialize + Debug` -
+    /// The data to write to the disk. This data is serialized before being written.
+    /// * `start_blk: u16` - The block number to start writing the data at.
+    ///
+    /// # Errors
+    /// Returns `FSError::SerializationError` if an error occurs during serialization.
+    /// Returns `FSError::NoFreeBlocks` if no free blocks are found in the FAT when needed.
     #[trace_log]
     pub fn write_data<T: Serialize + Debug>(&mut self, data: &T, start_blk: u16) -> Result<()> {
         // Serialize the data
@@ -255,6 +382,22 @@ impl FileSystem {
         Ok(())
     }
 
+    /// Updates the File Allocation Table (FAT) for a given block.
+    ///
+    /// This method takes a block number and an optional next block number as input.
+    /// If the next block number is `Some`,
+    /// it updates the FAT entry for the given block to `Taken(next_blk)`.
+    /// If the next block number is `None`, it updates the FAT entry for the given block to `EOF`.
+    /// It then writes the updated FAT to the disk.
+    ///
+    /// # Arguments
+    /// * `blk: u16` - The block number to update in the FAT.
+    /// * `next_blk: Option<u16>` - The optional next block number.
+    /// If `Some`, the FAT entry for `blk` is updated to `Taken(next_blk)`.
+    /// If `None`, the FAT entry for `blk` is updated to `EOF`.
+    ///
+    /// # Errors
+    /// Returns an error if writing the updated FAT to the disk fails.
     #[trace_log]
     pub fn update_fat(&mut self, blk: u16, next_blk: Option<u16>) -> Result<()> {
         match next_blk {
@@ -269,7 +412,30 @@ impl FileSystem {
         Ok(())
     }
 
-    // Method to read all blocks of a file in order following the FAT table
+    /// Reads all blocks of a file in order following the File Allocation Table (FAT).
+    ///
+    /// This method takes a starting block number as input and returns a `Result<FileData>`.
+    /// It creates a new `FileData` object and sets the starting block number.
+    /// It then defines a recursive closure to read blocks following the FAT.
+    /// The closure loops over the FAT, starting at the given block number.
+    /// For each block, it reads the block data and appends it to the `FileData` object.
+    /// If the FAT entry for a block is `Taken(next_blk)`, it updates the block number to `next_blk`
+    /// and continues the loop.
+    /// If the FAT entry for a block is `EOF`, it reads the block data,
+    /// appends it to the `FileData` object, and breaks the loop.
+    /// If the FAT entry for a block is neither `Taken` nor `EOF`,
+    /// it returns an `FSError::InvalidBlockReference` error.
+    /// After defining the closure,
+    /// it calls the closure with the starting block number and the data of the `FileData` object.
+    /// Finally, it returns the `FileData` object.
+    ///
+    /// # Arguments
+    /// * `start_blk: u16` - The block number to start reading the file data at.
+    ///
+    /// # Errors
+    /// Returns `FSError::InvalidBlockReference`
+    /// if a block reference in the FAT is neither `Taken` nor `EOF`.
+    /// Returns an error if reading a block from the disk fails.
     #[trace_log]
     pub fn read_file_data(&self, start_blk: u16) -> Result<FileData> {
         let mut data = FileData::default();
@@ -301,6 +467,30 @@ impl FileSystem {
         Ok(data)
     }
 
+    /// Clears the file data starting from a specified block.
+    ///
+    /// This method takes a starting block number as input
+    /// and clears all the blocks of the file following the File Allocation Table
+    /// (FAT).
+    /// It creates a vector of zeroes with the size of a block
+    /// and defines a recursive closure to clear blocks following the FAT.
+    /// The closure loops over the FAT, starting at the given block number.
+    /// For each block, it writes zeroes to the block and updates the FAT entry for the block to `Free`.
+    /// If the FAT entry for a block is `Taken(next_blk)`, it updates the block number to `next_blk`
+    /// and continues the loop.
+    /// If the FAT entry for a block is `EOF`, it writes zeroes to the block,
+    /// updates the FAT entry for the block to `Free`, and breaks the loop.
+    /// If the FAT entry for a block is neither `Taken` nor `EOF`,
+    /// it returns an `FSError::InvalidBlockReference` error.
+    /// After defining the closure, it calls the closure with the starting block number.
+    ///
+    /// # Arguments
+    /// * `start_blk: u16` - The block number to start clearing the file data at.
+    ///
+    /// # Errors
+    /// Returns `FSError::InvalidBlockReference`
+    /// if a block reference in the FAT is neither `Taken` nor `EOF`.
+    /// Returns an error if writing zeroes to a block or updating the FAT fails.
     #[trace_log]
     pub fn clear_file_data(&mut self, start_blk: u16) -> Result<()> {
         let mut blk_num = start_blk;
@@ -339,6 +529,25 @@ impl FileSystem {
         Ok(())
     }
 
+    /// Removes the directory data for a given directory entry.
+    ///
+    /// This method takes a directory entry and a path as input
+    /// and removes all the entries in the directory following the File Allocation Table
+    /// (FAT).
+    /// It reads the directory block of the given directory entry and iterates over all the entries in the directory block.
+    /// For each entry, if the entry is a file, it deletes the file.
+    /// If the entry is a directory, it recursively removes the directory data for the entry.
+    /// After iterating over all the entries,
+    /// it writes zeroes to the block of the given directory entry
+    /// and updates the FAT entry for the block to `Free`.
+    ///
+    /// # Arguments
+    /// * `dir_entry: &DirEntry` - The directory entry to remove the directory data for.
+    /// * `path: &str` - The path of the directory.
+    ///
+    /// # Errors
+    /// Returns an error if deleting a file, removing directory data,
+    /// reading a directory block, writing zeroes to a block, or updating the FAT fails.
     #[trace_log]
     pub fn remove_dir_data(&mut self, dir_entry: &DirEntry, path: &str) -> Result<()> {
         let block: DirBlock = self.read_dir_block(dir_entry)?;
@@ -365,6 +574,17 @@ impl FileSystem {
         Ok(())
     }
 
+    /// Reads a directory block from the disk.
+    ///
+    /// This method takes a block number as input
+    /// and reads the directory block from the disk at the given block number.
+    /// It returns a `Result<DirBlock>` containing the read directory block.
+    ///
+    /// # Arguments
+    /// * `blk: u64` - The block number to read the directory block from.
+    ///
+    /// # Errors
+    /// Returns an error if reading the directory block from the disk fails.
     #[trace_log]
     pub fn read_blk(&self, blk: u64) -> Result<DirBlock> {
         let block: DirBlock = self.disk.read_block(blk as usize)?;
