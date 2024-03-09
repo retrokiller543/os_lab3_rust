@@ -102,6 +102,8 @@ jobs:
         with:
           command: sdist
           args: --out dist
+          working-directory: file_system
+          rust-toolchain: nightly
       - name: Upload sdist
         uses: actions/upload-artifact@v4
         with:
