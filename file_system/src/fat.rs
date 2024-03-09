@@ -6,10 +6,14 @@ use std::ops::{Index, IndexMut};
 
 use serde_derive::{Deserialize, Serialize};
 
+#[cfg(feature = "py-bindings")]
+use pyo3::prelude::*;
+
 use logger_macro::trace_log;
 use rustic_disk::Disk;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, PartialEq, Eq)]
+//#[cfg_attr(feature = "py-bindings", pyclass)]
 pub enum FatType {
     Free,
     Taken(u16),
@@ -17,6 +21,7 @@ pub enum FatType {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
+#[cfg_attr(feature = "py-bindings", pyclass)]
 pub struct FAT(
     //#[serde(with = "BigArray")]
     Vec<FatType>,

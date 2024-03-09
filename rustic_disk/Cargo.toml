@@ -16,6 +16,8 @@ serde_derive = "1.0.196"
 thiserror = "1.0.56"
 log = "0.4.20"
 env_logger = "0.11.1"
+pyo3-helper-macros = { version = "0.0.6", optional = true, features = ["multiple_pymethod"] }
+pyo3 = { version = "0.20.0", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = "0.2.90"
@@ -45,3 +47,4 @@ serde-wasm-bindgen = "0.6.5"
 [features]
 default = []
 debug = []
+py-bindings = ["dep:pyo3", "dep:pyo3-helper-macros", "pyo3/extension-module", "pyo3/multiple-pymethods"]

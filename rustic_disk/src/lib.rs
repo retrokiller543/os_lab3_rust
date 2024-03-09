@@ -16,7 +16,8 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::fs;
 #[cfg(not(target_arch = "wasm32"))]
 use std::io::{Read, Seek, SeekFrom, Write};
-
+#[cfg(feature = "py-bindings")]
+use pyo3::prelude::*;
 
 // Required imports for WASM
 //#[cfg(target_arch = "wasm32")]
@@ -30,6 +31,8 @@ use std::path::Path;
 use std::fs::{File, OpenOptions};
 #[cfg(target_arch = "wasm32")]
 use core::fmt::Debug;
+#[cfg(not(target_arch = "wasm32"))]
+use std::sync::{Arc, Mutex};
 
 /// Name of the disk file on the filesystem.
 #[cfg(not(target_arch = "wasm32"))]
@@ -40,10 +43,12 @@ const DISKNAME: &str = "diskfile.bin";
 /// This struct encapsulates operations for interacting with a disk file, including
 /// creating a new disk, reading and writing to disk blocks, and deleting the disk file.
 /// It is designed to simulate block-level operations on a virtual disk file.
+#[cfg_attr(feature = "py-bindings", pyclass)]
+#[derive(Debug, Clone)]
 pub struct Disk {
     /// The file handle for the disk file.
     #[cfg(not(target_arch = "wasm32"))]
-    diskfile: File,
+    diskfile: Arc<Mutex<File>>,
     #[cfg(target_arch = "wasm32")]
     storage: Vec<u8>
 }
@@ -74,7 +79,9 @@ impl Disk {
             file.set_len(Self::DISK_SIZE as u64)?;
         }
         let diskfile = OpenOptions::new().read(true).write(true).open(DISKNAME)?;
-        Ok(Disk { diskfile })
+        Ok(Disk {
+            diskfile: Arc::new(Mutex::new(diskfile)),
+        })
     }
 
     #[cfg(target_arch = "wasm32")]
@@ -201,12 +208,13 @@ impl BlockStorage for Disk {
         &self,
         block_index: usize,
     ) -> Result<T, DiskError> {
-        let mut file = &self.diskfile;
+        let file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
-        file.seek(SeekFrom::Start(position))
+        let mut file_lock = file.lock().map_err(|e | DiskError::FileLockError(e.into()))?;
+        file_lock.seek(SeekFrom::Start(position))
             .map_err(DiskError::SeekError)?;
         let mut buffer = vec![0u8; Self::BLOCK_SIZE];
-        file.read_exact(&mut buffer)
+        file_lock.read_exact(&mut buffer)
             .map_err(DiskError::ReadDiskError)?;
         let data = bincode::deserialize(&buffer).map_err(DiskError::DeserializationError)?;
         #[cfg(feature = "debug")]
@@ -268,8 +276,9 @@ impl BlockStorage for Disk {
             );
             return Err(DiskError::DataExceedsBlockSize);
         }
-        let mut file = &self.diskfile;
+        let file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
+        let mut file = file.lock().map_err(|e | DiskError::FileLockError(e.into()))?;
         file.seek(SeekFrom::Start(position))
             .map_err(DiskError::SeekError)?;
         file.write_all(&serialized_data)
@@ -320,8 +329,9 @@ impl BlockStorage for Disk {
             );
             return Err(DiskError::DataExceedsBlockSize);
         }
-        let mut file = &self.diskfile;
+        let file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
+        let mut file = file.lock().map_err(|e | DiskError::FileLockError(e.into()))?;
         file.seek(SeekFrom::Start(position))
             .map_err(DiskError::SeekError)?;
         file.write_all(data).map_err(DiskError::WriteDiskError)?;
@@ -357,8 +367,9 @@ impl BlockStorage for Disk {
     /// # Ok(())
     /// # }
     fn read_raw_data(&self, block_index: usize) -> Result<Vec<u8>, DiskError> {
-        let mut file = &self.diskfile;
+        let file = &self.diskfile;
         let position = self.get_block_position(block_index)?;
+        let mut file = file.lock().map_err(|e | DiskError::FileLockError(e.into()))?;
         file.seek(SeekFrom::Start(position))
             .map_err(DiskError::SeekError)?;
         let mut buffer = vec![0u8; Self::BLOCK_SIZE];

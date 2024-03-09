@@ -2,6 +2,8 @@ use std::fmt;
 use std::fmt::Debug;
 
 use anyhow::Result;
+#[cfg(feature = "py-bindings")]
+use pyo3::pyclass;
 use serde_derive::{Deserialize, Serialize};
 
 use logger_macro::trace_log;
@@ -11,6 +13,7 @@ use crate::utils::fixed_str::FixedString;
 use crate::{FileSystem, READ_WRITE};
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Copy, Clone)]
+#[cfg_attr(feature = "py-bindings", pyclass)]
 pub enum FileType {
     #[default]
     File,
@@ -18,6 +21,7 @@ pub enum FileType {
 }
 
 #[derive(Debug, Default, Serialize, Deserialize, PartialEq, Clone)]
+#[cfg_attr(feature = "py-bindings", pyclass)]
 pub struct DirEntry {
     pub(crate) name: FixedString,
     pub(crate) file_type: FileType,
@@ -63,6 +67,7 @@ impl DirEntry {
 }
 
 #[derive(Default, Serialize, Deserialize, PartialEq, Clone)]
+#[cfg_attr(feature = "py-bindings", pyclass)]
 pub struct DirBlock {
     #[serde(skip_deserializing, skip_serializing)]
     pub(crate) path: String,
@@ -75,7 +80,6 @@ pub struct DirBlock {
 
 impl Debug for DirBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        // get number of filled entries vs total entries
         let filled = self
             .entries
             .iter()
@@ -90,7 +94,7 @@ impl Debug for DirBlock {
             .collect::<Vec<_>>();
         write!(
             f,
-            "Block {{ path: {}, parent_entry: {:?}, blk_num: {}, entries: {:?}, filled: {}/{} }}",
+            "Block {{ path: {}, parent_entry: {:#?}, blk_num: {}, entries: {:#?}, filled: {}/{} }}",
             self.path, self.parent_entry, self.blk_num, filled_entries, filled, total
         )
     }

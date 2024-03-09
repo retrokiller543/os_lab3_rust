@@ -29,9 +29,14 @@ pub mod prelude;
 mod tests;
 mod traits;
 mod utils;
+#[cfg(feature = "py-bindings")]
+mod py_bindings;
 
 use std::io;
+#[cfg(feature = "py-bindings")]
+use pyo3::pyclass;
 
+#[cfg_attr(feature = "py-bindings", pyclass)]
 pub struct StdIOHandler;
 
 impl IOHandler for StdIOHandler {
@@ -60,11 +65,12 @@ impl Debug for StdIOHandler {
 const ROOT_BLK: u64 = 0;
 const FAT_BLK: u64 = 1;
 
+#[derive(Debug)]
 pub struct FileSystem {
     disk: Disk,
     curr_block: DirBlock,
     fat: FAT,
-    pub io_handler: Box<dyn IOHandler<Input=String, Output=String>>,
+    pub io_handler: Box<dyn IOHandler<Input=String, Output=String> + Send + Sync>,
 }
 
 const READ: u8 = 0x04;
@@ -96,7 +102,7 @@ impl FileSystem {
     }
 
     #[trace_log]
-    pub fn new(io_handler: Box<dyn IOHandler<Input = String, Output = String>>) -> Result<Self> {
+    pub fn new(io_handler: Box<dyn IOHandler<Input = String, Output = String>  + Send + Sync>) -> Result<Self> {
         #[cfg(feature = "debug")]
         {
             debug!("Creating new file system");

@@ -4,6 +4,9 @@ use std::fmt::Display;
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+#[cfg(feature = "py-bindings")]
+use pyo3::prelude::*;
+
 #[derive(Debug, Clone, PartialEq, thiserror::Error, Serialize, Deserialize)]
 enum NameError {
     #[error("Name too long: found {0}, max length is 56 including null terminator.")]
@@ -13,6 +16,7 @@ enum NameError {
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]
+#[cfg_attr(feature = "py-bindings", pyclass)]
 pub struct FixedString {
     pub value: String,
 }
