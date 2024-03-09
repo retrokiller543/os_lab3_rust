@@ -1,7 +1,11 @@
 [package]
 name = "file_system"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
+description = "A Rustic mockup File System running on top of a real file system"
+license = "MIT"
+readme = "README.md"
+authors = ["Tosic.Killer <emil.schutt@gmail.com>"]
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -20,6 +24,7 @@ prettytable-rs = "0.10.0"
 logger_macro = { path = "../logger_macro" }
 pyo3-helper-macros = { version = "0.0.6", optional = true, features = ["multiple_pymethod"] }
 pyo3 = { version = "0.20.0", optional = true }
+
 
 [features]
 default = []
