@@ -12,7 +12,7 @@ def run_command(command):
 
 def main(tag_name):
     # Example of a non-CI commit. Adjust as needed.
-    run_command("git commit --allow-empty -m 'Triggering release process'")
+    run_command("git commit --allow-empty -m 'Triggering release process [skip ci]'")
     run_command(f"git tag {tag_name}")
     run_command("git push origin --tags")
 
