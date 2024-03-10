@@ -220,3 +220,29 @@ class FAT:
     # Assuming a constructor and methods to manipulate the FAT vector
     def __init__(self, fat_entries: List['FatType']) -> None: ...
     # Additional methods here
+
+def setup_logger(log_level: str) -> None:
+    """
+    Sets up the logger for the filesystem.
+    This logger will write to the console.
+
+    Errors:
+        - Can only be called once.
+    """
+    ...
+
+def setup_file_logger(log_level: str) -> None:
+    """
+    Sets up the logger for the filesystem.
+    This logger will write to a file.
+
+    Errors:
+        - Can only be called once.
+    """
+    ...
+
+def setup_pyo3_logger() -> None:
+    """
+    This sets up the logger to integrate with python logging via pyo3_log crate.
+    """
+    ...
