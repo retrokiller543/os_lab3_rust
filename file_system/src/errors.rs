@@ -42,7 +42,7 @@ pub enum FileError {
     NoPermissionToWrite(String),
     #[error("No premission to read file: {0}")]
     NoPermissionToRead(String),
-    #[error("No premission to execute file: {0}")]
+    #[error("No premission to execute: {0}")]
     NoPermissionToExecute(String),
     #[error("Python error: {0}")]
     PyError(String),

@@ -31,34 +31,54 @@ pub fn run_code(code: String) -> PyResult<()> {
 }
 
 impl FileSystem {
-    pub fn execute_py(&mut self, file_path: &str) -> Result<()> {
+    pub fn execute_py(&mut self, input: &str) -> Result<()> {
         #[cfg(PyPy)]
         return Err(FSError::PythonNotSupported.into());
+
         #[cfg(not(PyPy))]
         {
             pyo3::prepare_freethreaded_python();
-            
-            let abs_path = absolutize_from(file_path, &self.curr_block.path);
-            let (parent, name) = split_path(abs_path.clone());
-            let parent_block = self.traverse_dir(parent)?;
 
-            if !check_access_level(parent_block.parent_entry.access_level, READ) {
-                return Err(FileError::NoPermissionToWrite(name).into());
+            let code_to_run: String;
+            let name: String;
+
+            // Check if input is enclosed in quotes to signal raw Python code
+            if input.starts_with('"') && input.ends_with('"') {
+                // It's raw Python code
+                code_to_run = input.trim_matches('"').to_string();
+
+                // Check if we have execute permissions in the current directory
+                let current_dir = &self.curr_block;
+                if !check_access_level(current_dir.parent_entry.access_level, EXECUTE) {
+                    return Err(FileError::NoPermissionToExecute(current_dir.clone().path).into());
+                }
+            } else {
+                // It's a virtual file path, process it
+                let abs_path = absolutize_from(input, &self.curr_block.path);
+                let (parent, name_extracted) = split_path(abs_path.clone());
+                name = name_extracted; // Save the name for permission checks
+
+                let parent_block = self.traverse_dir(parent)?;
+
+                if !check_access_level(parent_block.parent_entry.access_level, READ) {
+                    return Err(FileError::NoPermissionToWrite(name.clone()).into());
+                }
+
+                let entry = parent_block.get_entry(&name.clone().into()).ok_or(FileError::FileNotFound)?;
+
+                if entry.file_type != FileType::File {
+                    return Err(FileError::FileIsDirectory.into());
+                }
+
+                if !check_access_level(entry.access_level, EXECUTE) {
+                    return Err(FileError::NoPermissionToExecute(name.clone()).into());
+                }
+
+                code_to_run = self.read_file_data(entry.blk_num)?.into();
             }
 
-            let entry = parent_block.get_entry(&name.clone().into()).ok_or(FileError::FileNotFound)?;
-
-            if entry.file_type != FileType::File {
-                return Err(FileError::FileIsDirectory.into());
-            }
-
-            if !check_access_level(entry.access_level, EXECUTE) {
-                return Err(FileError::NoPermissionToExecute(name).into());
-            }
-
-            let data = self.read_file_data(entry.blk_num)?;
-
-            run_code(data.into())?;
+            // Execute the Python code
+            run_code(code_to_run)?;
 
             Ok(())
         }
