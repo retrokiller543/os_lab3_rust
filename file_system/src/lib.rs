@@ -31,6 +31,7 @@ mod py_bindings;
 mod tests;
 mod traits;
 mod utils;
+#[cfg(not(PyPy))]
 mod execute_py;
 
 #[cfg(feature = "py-bindings")]
