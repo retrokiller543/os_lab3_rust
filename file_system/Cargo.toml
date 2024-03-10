@@ -1,6 +1,6 @@
 [package]
 name = "file_system"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 description = "A Rustic mockup File System running on top of a real file system"
 license = "MIT"
