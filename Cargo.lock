@@ -649,6 +649,7 @@ dependencies = [
  "logger_macro",
  "prettytable-rs",
  "pyo3",
+ "pyo3-build-config",
  "pyo3-helper-macros",
  "pyo3-log",
  "rustic_disk",

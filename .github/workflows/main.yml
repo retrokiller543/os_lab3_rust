@@ -139,7 +139,7 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [linux, windows, macos, sdist]
+    needs: [linux, windows, macos, macos-m1, sdist]
     steps:
       - uses: actions/download-artifact@v4
       - name: Publish to PyPI

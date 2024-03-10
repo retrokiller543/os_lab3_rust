@@ -164,7 +164,7 @@ impl FileSystem {
         py_wrap!(self.move_entry(source, dest))
     }
     
-    #[cfg(not(PyPy))]
+    //#[cfg(not(PyPy))]
     #[pyo3(name = "execute_py")]
     pub fn py_execute_py(&mut self, file_path: &str) -> PyResult<()> {
         py_wrap!(self.execute_py(file_path))
