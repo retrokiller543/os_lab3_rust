@@ -28,7 +28,7 @@ class DirBlock:
 @dataclass
 class FileSystem:
     """
-    Docs for FileSystem can be found at https://jkdshfhjsd.com
+    Docs for FileSystem can be found at https://jkdshfhjsd.com not an actual link yet!!!
     """
 
     _disk: Disk
@@ -197,6 +197,13 @@ class FileSystem:
         Moves a file or directory from the source to the destination path.
         """
         ...
+
+    def execute_py(self, file_path: str) -> None:
+        """
+        :param file_path: str:
+        :return:
+        """
+
 
 @dataclass
 class Disk:

@@ -39,6 +39,24 @@ impl From<String> for FileData {
     }
 }
 
+impl From<Vec<u8>> for FileData {
+    fn from(data: Vec<u8>) -> Self {
+        FileData { data }
+    }
+}
+
+impl From<FileData> for Vec<u8> {
+    fn from(data: FileData) -> Self {
+        data.data
+    }
+}
+
+impl From<FileData> for String {
+    fn from(data: FileData) -> Self {
+        String::from_utf8(data.data).unwrap()
+    }
+}
+
 impl Add for FileData {
     type Output = Self;
 

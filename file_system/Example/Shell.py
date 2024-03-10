@@ -27,6 +27,7 @@ class Shell:
             "cd": self.change_dir,
             "chmod": self.change_permissions,
             "dbg": self.dbg,
+            "exec": self.exec,
             "quit": lambda _: None,
         }
 
@@ -114,6 +115,10 @@ class Shell:
             raise ShellError("Invalid number of arguments for chmod")
         self.fs.change_permissions(args[0], args[1])
 
+    def exec(self, args: list[str]):
+        if len(args) != 1:
+            raise ShellError("Invalid number of arguments for exec")
+        self.fs.execute_py(args[0])
     # Implement similar handler functions for other commands...
 
     def run(self):

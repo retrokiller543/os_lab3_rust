@@ -163,6 +163,11 @@ impl FileSystem {
     pub fn py_move_entry(&mut self, source: &str, dest: &str) -> PyResult<()> {
         py_wrap!(self.move_entry(source, dest))
     }
+    
+    #[pyo3(name = "execute_py")]
+    pub fn py_execute_py(&mut self, file_path: &str) -> PyResult<()> {
+        py_wrap!(self.execute_py(file_path))
+    }
 
     // =========================================================================
 

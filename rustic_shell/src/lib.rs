@@ -203,6 +203,7 @@ impl Shell {
             "pwd" => print_working_dir(0), // No arguments expected for pwd
             "chmod" => change_permissions(2), // Expects exactly 2 arguments
             "rm" => remove_entry(1), // Expects exactly 1 argument
+            "exec" => execute_py(1), // Expects exactly 1 argument
         }}
     }
 
@@ -218,6 +219,7 @@ impl Shell {
     function_handler! {print_working_dir}
     function_handler! {change_permissions, 0, 1}
     function_handler! {remove_entry, 0}
+    function_handler! {execute_py, 0}
 
     /// Displays help information for available commands.
     ///
