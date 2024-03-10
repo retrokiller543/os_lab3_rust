@@ -14,6 +14,8 @@ pub enum FSError {
     InvalidBlockReference,
     #[error("Python error: {0}")]
     PyError(String),
+    #[error("Python not supported on this platform, please see https://pyo3.rs/v0.20.2/building_and_distribution.html?highlight=pypy%20embeded#dynamically-embedding-the-python-interpreter for more information.")]
+    PythonNotSupported
 }
 
 #[derive(Error, Debug)]

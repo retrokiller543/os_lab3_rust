@@ -23,6 +23,11 @@ pub fn run_code(code: String) -> PyResult<()> {
 
 impl FileSystem {
     pub fn execute_py(&mut self, file_path: &str) -> Result<()> {
+        #[cfg(not(PyPy))]
+        pyo3::prepare_freethreaded_python();
+        #[cfg(PyPy)]
+        return Err(FSError::PythonNotSupported.into());
+        
         let abs_path = absolutize_from(file_path, &self.curr_block.path);
         let (parent, name) = split_path(abs_path.clone());
         let parent_block = self.traverse_dir(parent)?;
@@ -42,8 +47,7 @@ impl FileSystem {
         }
         
         let data = self.read_file_data(entry.blk_num)?;
-
-        pyo3::prepare_freethreaded_python();
+        
         run_code(data.into())?;
 
         Ok(())

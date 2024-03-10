@@ -93,6 +93,31 @@ jobs:
           name: wheels-macos-${{ matrix.target }}
           path: file_system/dist
 
+# m1 mac
+  macos-m1:
+    runs-on: macos-14
+    strategy:
+      matrix:
+        target: [aarch64-apple-darwin]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Build wheels
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist --find-interpreter
+          sccache: 'true'
+          working-directory: file_system
+          rust-toolchain: nightly
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-macos-${{ matrix.target }}
+          path: file_system/dist
+
   sdist:
     runs-on: ubuntu-latest
     steps:
