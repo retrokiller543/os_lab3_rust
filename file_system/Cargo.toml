@@ -1,6 +1,6 @@
 [package]
 name = "file_system"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 description = "A Rustic mockup File System running on top of a real file system"
 license = "MIT"
@@ -35,4 +35,4 @@ default = []
 debug = ["rustic_disk/debug"]
 trace = []
 py-bindings = ["dep:pyo3-helper-macros", "pyo3/extension-module", "pyo3/multiple-pymethods", "rustic_disk/py-bindings", "pyo3-log"]
-abi3 = ["pyo3/abi3", "pyo3/abi3-py37"]
+abi3 = ["pyo3/abi3", "pyo3/abi3-py37", "py-bindings", "pyo3-build-config/abi3", "pyo3-build-config/abi3-py37"]

@@ -132,7 +132,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --features "py-bindings abi3"
+          args: --release --out dist --find-interpreter --features abi3
           sccache: 'true'
           manylinux: auto
           working-directory: file_system
@@ -158,7 +158,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --features "py-bindings abi3"
+          args: --release --out dist --find-interpreter --features abi3
           sccache: 'true'
           working-directory: file_system
 
@@ -183,7 +183,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --features "py-bindings abi3"
+          args: --release --out dist --find-interpreter --features abi3
           sccache: 'true'
           working-directory: file_system
           rust-toolchain: nightly
@@ -207,7 +207,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist --find-interpreter --features "py-bindings abi3"
+          args: --release --out dist --find-interpreter --features abi3
           sccache: 'true'
           working-directory: file_system
           rust-toolchain: nightly
