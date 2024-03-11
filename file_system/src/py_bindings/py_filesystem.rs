@@ -42,7 +42,7 @@ impl FileSystem {
     }
 
     #[pyo3(name = "get_free_block")]
-    pub fn py_get_free_block(&self) -> PyResult<u16> {
+    pub fn py_get_free_block(&mut self) -> PyResult<u16> {
         py_wrap!(self.get_free_block(), u16)
     }
 

@@ -36,6 +36,7 @@ mod execute_py;
 #[cfg(feature = "py-bindings")]
 use pyo3::prelude::*;
 use std::io;
+use log::info;
 
 /// The `StdIOHandler` struct is a standard input/output handler.
 ///
@@ -305,13 +306,14 @@ impl FileSystem {
     /// # Errors
     /// Returns `FSError::NoFreeBlocks` if no free blocks are found in the FAT.
     #[trace_log]
-    pub fn get_free_block(&self) -> Result<u16> {
+    pub fn get_free_block(&mut self) -> Result<u16> {
         let mut blk = 0;
 
         for (index, block) in self.fat.iter().enumerate() {
             match block {
                 FatType::Free => {
                     blk = index as u16;
+                    self.fat[index] = FatType::Taken(0);
                     break;
                 }
                 _ => continue,
@@ -344,42 +346,49 @@ impl FileSystem {
     /// # Errors
     /// Returns `FSError::SerializationError` if an error occurs during serialization.
     /// Returns `FSError::NoFreeBlocks` if no free blocks are found in the FAT when needed.
-    #[trace_log]
+    //#[trace_log]
     pub fn write_data<T: Serialize + Debug>(&mut self, data: &T, start_blk: u16) -> Result<()> {
         // Serialize the data
         let serialized_data = bincode::serialize(data).map_err(FSError::SerializationError)?;
 
         // If the data fits within a single block, write it directly
         if serialized_data.len() <= Disk::BLOCK_SIZE {
-            self.disk
-                .write_raw_data(start_blk as usize, &serialized_data)?;
-            // Update FAT for start_blk to EOF since it's the last block
-            self.update_fat(start_blk, None)?; // Assuming update_fat takes an Option<u64> for the second param
+            self.disk.write_raw_data(start_blk as usize, &serialized_data)?;
+            // Directly update FAT for start_blk to EOF
+            self.set_fat_block(start_blk, FatType::EOF)?;
+            // write the updated FAT to the disk
+            self.disk.write_block(FAT_BLK as usize, &self.fat)?;
             return Ok(());
         }
 
-        // Split into chunks for larger data
+        // For larger data, split into chunks
         let mut chunks = serialized_data.chunks(Disk::BLOCK_SIZE).peekable();
         let mut blk = start_blk;
-        let mut first_iteration = true;
 
         while let Some(chunk) = chunks.next() {
-            if !first_iteration {
-                blk = self.get_free_block()?; // Get a new block if not the first iteration
-            } else {
-                first_iteration = false;
-            }
+            // Write the current chunk
             self.disk.write_raw_data(blk as usize, chunk)?;
-            let next_blk = if chunks.peek().is_some() {
-                Some(self.get_free_block()?)
-            } else {
-                None
-            };
 
-            // Update FAT for blk. If next_blk is None, it's the last chunk
-            self.update_fat(blk, next_blk)?;
+            if chunks.peek().is_some() {
+                // If there's more data, get a new block and update the FAT to link to it
+                let new_blk = self.get_free_block()?;
+                self.set_fat_block(blk, FatType::Taken(new_blk))?;
+                blk = new_blk; // Update blk to the new block for the next iteration
+            } else {
+                // If it's the last chunk, update the FAT to EOF
+                self.set_fat_block(blk, FatType::EOF)?;
+            }
         }
 
+        // write the updated FAT to the disk
+        self.disk.write_block(FAT_BLK as usize, &self.fat)?;
+
+        Ok(())
+    }
+
+
+    pub fn set_fat_block(&mut self, blk: u16, new_val: FatType) -> Result<()> {
+        self.fat[blk as usize] = new_val;
         Ok(())
     }
 
@@ -439,7 +448,7 @@ impl FileSystem {
     /// Returns an error if reading a block from the disk fails.
     #[trace_log]
     pub fn read_file_data(&self, start_blk: u16) -> Result<FileData> {
-        let mut data = FileData::default();
+        let mut data = Vec::new();
         let mut blk_num = start_blk;
 
         // Recursive closure to read blocks following the FAT
@@ -447,13 +456,15 @@ impl FileSystem {
             loop {
                 match self.fat.get(*blk_num as usize) {
                     Some(&FatType::Taken(next_blk)) => {
-                        let block: FileData = self.disk.read_block(*blk_num as usize)?;
-                        data.extend_from_slice(&block.data);
+                        info!("Reading block (Taken({})): {}", next_blk, blk_num);
+                        let block = self.disk.read_raw_data(*blk_num as usize)?;
+                        data.extend_from_slice(&block);
                         *blk_num = next_blk;
                     }
                     Some(&FatType::EOF) => {
-                        let block: FileData = self.disk.read_block(*blk_num as usize)?;
-                        data.extend_from_slice(&block.data);
+                        info!("Reading block (EOF): {}", blk_num);
+                        let block = self.disk.read_raw_data(*blk_num as usize)?;
+                        data.extend_from_slice(&block);
                         break;
                     }
                     _ => return Err(FSError::InvalidBlockReference.into()),
@@ -463,9 +474,11 @@ impl FileSystem {
         };
 
         // Call the recursive read function
-        read_blocks_recursively(&mut blk_num, &mut data.data)?;
+        read_blocks_recursively(&mut blk_num, &mut data)?;
+        // deserialize the data into file data
+        let file_data: FileData = bincode::deserialize(&data)?;
 
-        Ok(data)
+        Ok(file_data)
     }
 
     /// Clears the file data starting from a specified block.

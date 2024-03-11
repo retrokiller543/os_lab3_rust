@@ -15,8 +15,10 @@ use {
     crate::utils::check_access_level,
     crate::utils::path_handler::{absolutize_from, split_path},
 };
+use logger_macro::trace_log;
 
 #[cfg(not(PyPy))]
+#[trace_log]
 pub fn run_code(code: String) -> PyResult<()> {
     Python::with_gil(|py| {
         let locals = PyDict::new(py);
@@ -25,12 +27,13 @@ pub fn run_code(code: String) -> PyResult<()> {
         // convert the globals to a dictionary using PyTryFrom
         let globals = <PyDict as PyTryFrom>::try_from(globals)?;
 
-        py.run(&code, Some(globals), Some(locals))?;
+        py.run(&code, None, Some(locals))?;
         Ok(())
     })
 }
 
 impl FileSystem {
+    #[trace_log]
     pub fn execute_py(&mut self, input: &str) -> Result<()> {
         #[cfg(PyPy)]
         return Err(FSError::PythonNotSupported.into());
@@ -45,7 +48,7 @@ impl FileSystem {
             // Check if input is enclosed in quotes to signal raw Python code
             if input.starts_with('"') && input.ends_with('"') {
                 // It's raw Python code
-                code_to_run = input.trim_matches('"').to_string();
+                code_to_run = input.trim_matches('"').replace("\\n", "\n").to_string();
 
                 // Check if we have execute permissions in the current directory
                 let current_dir = &self.curr_block;
