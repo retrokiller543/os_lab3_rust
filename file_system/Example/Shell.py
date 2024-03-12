@@ -29,6 +29,8 @@ class Shell:
             "dbg": self.dbg,
             "exec": self.exec,
             "quit": lambda _: None,
+            "help": lambda _: print("Commands: format, create, cat, ls, append, rm, mv, cp, mkdir, pwd, cd, chmod, "
+                                    "dbg, exec, quit, help"),
         }
 
         if cmd not in handlers:
@@ -45,61 +47,51 @@ class Shell:
         print(self.fs)
 
     def format(self, args: list[str]):
-        # Implement format logic using RusticFS methods
         if args:
             raise ShellError("Invalid number of arguments for format")
         self.fs.format()
 
     def create_file(self, args: list[str]):
-        # Implement create_file logic using RusticFS methods
         if len(args) != 1:
             raise ShellError(f"Invalid number of arguments for create: {args}")
         self.fs.create_file(args[0])
 
     def read_file(self, args: list[str]):
-        # Implement read_file logic using RusticFS methods
         if len(args) != 1:
             raise ShellError("Invalid number of arguments for cat")
         print(self.fs.read_file(args[0]))
 
     def list_dir(self, args: list[str]):
-        # Implement list_dir logic using RusticFS methods
         if args:
             raise ShellError("Invalid number of arguments for ls")
         print(self.fs.list_dir())
 
     def append_file(self, args: list[str]):
-        # Implement append_file logic using RusticFS methods
         if len(args) != 2:
             raise ShellError("Invalid number of arguments for append")
         self.fs.append_file(args[0], args[1])
 
     def remove_entry(self, args: list[str]):
-        # Implement remove_entry logic using RusticFS methods
         if len(args) != 1:
             raise ShellError("Invalid number of arguments for rm")
         self.fs.remove_entry(args[0])
 
     def move_entry(self, args: list[str]):
-        # Implement move_entry logic using RusticFS methods
         if len(args) != 2:
             raise ShellError("Invalid number of arguments for mv")
         self.fs.move_entry(args[0], args[1])
 
     def copy_entry(self, args: list[str]):
-        # Implement copy_entry logic using RusticFS methods
         if len(args) != 2:
             raise ShellError("Invalid number of arguments for cp")
         self.fs.copy_entry(args[0], args[1])
 
     def create_dir(self, args: list[str]):
-        # Implement create_dir logic using RusticFS methods
         if len(args) != 1:
             raise ShellError("Invalid number of arguments for mkdir")
         self.fs.create_dir(args[0])
 
     def print_working_dir(self, args: list[str]):
-        # Implement print_working_dir logic using RusticFS methods
         if args:
             raise ShellError("Invalid number of arguments for pwd")
         print(self.fs.print_working_dir())
@@ -119,7 +111,6 @@ class Shell:
         if len(args) != 1:
             raise ShellError("Invalid number of arguments for exec")
         self.fs.execute_py(args[0])
-    # Implement similar handler functions for other commands...
 
     def run(self):
         while True:
